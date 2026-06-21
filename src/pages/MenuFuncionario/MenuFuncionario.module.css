@@ -1,0 +1,29 @@
+.menu{
+   background-color: #000000;
+  box-shadow: 0 2px 10px rgb(0, 0, 0) !important;
+  position: sticky;
+  top: 0;
+  z-index: 100; 
+    
+}
+
+.logo {
+color: #81c784 !important;
+    font-weight: bold;
+    font-size: 1.4rem;
+    font-family: 'Times New Roman', Times, serif;
+}
+
+.itemMenu {
+    color: #81c784  !important;
+    transition: .3s;
+    font-family: 'Times New Roman', Times, serif;
+}
+
+.itemMenu:hover {
+    color: rgb(32, 25, 25) !important;
+    transform: translateY(-1px);
+    font-family: 'Times New Roman', Times, serif;
+}
+
+
