@@ -13,6 +13,9 @@ const ListarProduto = () => {
     box-shadow:0 2px 10px rgba(0,0,0,.1);
     transition:.3s;
     width:18rem;
+    display:flex;
+    flex-direction:column;
+    height:100%;
 }
 
         .container{
@@ -24,6 +27,8 @@ const ListarProduto = () => {
     grid-template-columns: repeat(4, 18rem);
     gap:16px;
     justify-content:center;
+    margin-top:40px;
+    margin-bottom:80px;
 }
  
 .card:hover{
@@ -34,15 +39,21 @@ const ListarProduto = () => {
     width:100%;
     height:300px;
     object-fit:cover;
+    flex-shrink:0;
 }
  
 .info{
     padding:8px;
+    display:flex;
+    flex-direction:column;
+    flex:1;
+    justify-content:space-between;
 }
  
 .info h3{
     color:#333;
     margin-bottom:10px;
+    min-height:48px;
 }
  
 .preco{
@@ -51,7 +62,7 @@ const ListarProduto = () => {
     margin-bottom:8px;
 }
  
-button{
+.card button{
     width:auto;
     background:#333;
     color:white;
@@ -60,9 +71,11 @@ button{
     font-size:12px;
     cursor:pointer;
     border-radius:5px;
+    margin-top:auto;
+    align-self:flex-start;
 }
 
-button:hover{
+.card button:hover{
     background:#4CAF50;
 }
 .footer {
@@ -71,6 +84,9 @@ text-align: center;
 padding: 20px;
 color: white;
 font-size: 0.9rem;
+width: 100vw;
+margin-left: calc(50% - 50vw);
+box-sizing: border-box;
 }
 
         `}</style>
@@ -158,7 +174,7 @@ font-size: 0.9rem;
                     </div>
 
                     <div className="card">
-                        <img src="https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=500" alt="Pimenta Dedo-de-Moça" />
+                        <img src="https://www.petz.com.br/blog/wp-content/uploads/2022/11/como-plantar-pimenta-dedo-de-moca.jpg" alt="Pimenta Dedo-de-Moça" />
                         <div className="info">
                             <h3>Pimenta Dedo-de-Moça</h3>
                             <p className="preco">R$ 9,90</p>
@@ -167,7 +183,7 @@ font-size: 0.9rem;
                     </div>
 
                     <div className="card">
-                        <img src="https://images.unsplash.com/photo-1524594154901-393d1c4b5f2b?w=500" alt="Ervilha" />
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQaNxmwCv6JgpbzpmSiKw699sbXccsoAcRtGGvNkQTIXNuRRrTJIdmOaf4&s=10" alt="Ervilha" />
                         <div className="info">
                             <h3>Ervilha</h3>
                             <p className="preco">R$ 10,90</p>
@@ -176,7 +192,7 @@ font-size: 0.9rem;
                     </div>
 
                     <div className="card">
-                        <img src="https://images.unsplash.com/photo-1502741126161-b048400d9a7f?w=500" alt="Feijão Vagem" />
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKUqu3P59LcCmGHsF2YkWLYnjH_e8-Lvku3Et9eSmpSA&s=10" alt="Feijão Vagem" />
                         <div className="info">
                             <h3>Feijão Vagem</h3>
                             <p className="preco">R$ 12,90</p>
@@ -185,7 +201,7 @@ font-size: 0.9rem;
                     </div>
 
                     <div className="card">
-                        <img src="https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=500" alt="Melância Crimson Sweet" />
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRiRyjBpW_nN2mfx5kLpjRBXqh3Dr5yiMkxRjDVe98AAfY9tDq48W9qkX8&s=10" alt="Melância Crimson Sweet" />
                         <div className="info">
                             <h3>Melância Crimson Sweet </h3>
                             <p className="preco">R$ 14,90</p>
@@ -194,7 +210,7 @@ font-size: 0.9rem;
                     </div>
 
                     <div className="card">
-                        <img src="https://images.unsplash.com/photo-1549880338-65ddcdfd017b?w=500" alt="Melão Amarelo" />
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfDl7HDgt3WqZ4pnIDivfb1tGakas6Jf6N6GF3402jvw&s=10" alt="Melão Amarelo" />
                         <div className="info">
                             <h3>Melão Amarelo</h3>
                             <p className="preco">R$ 13,90</p>
@@ -203,7 +219,7 @@ font-size: 0.9rem;
                     </div>
 
                     <div className="card">
-                        <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=500" alt="Alface Crespa" />
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSopwgSjr8I1rJunqasNBleDNBBkcahpuV-uPFUKudPsg&s=10" alt="Alface Crespa" />
                         <div className="info">
                             <h3>Alface Crespa</h3>
                             <p className="preco">R$ 7,90</p>
@@ -212,7 +228,7 @@ font-size: 0.9rem;
                     </div>
 
                     <div className="card">
-                        <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500" alt="Cenoura Brasília" />
+                        <img src="https://www.sitiodamata.com.br/media/catalog/product/cache/02a967fa0e464fd60865ccf512e40f92/c/e/cenoura-brasilia-agroeconomico-2-2-e1494768491984.jpg" alt="Cenoura Brasília" />
                         <div className="info">
                             <h3>Cenoura Brasília</h3>
                             <p className="preco">R$ 8,90</p>

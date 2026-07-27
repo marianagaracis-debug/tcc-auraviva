@@ -5,7 +5,7 @@ const MenuFuncionario = () => {
 return(
 
     <div>
-<nav className={'navbar navbar-expand-lg navbar-light bg-light p-2 rounded shadow-sm w-100${styles.menu}'}>
+<nav className={`navbar navbar-expand-lg navbar-light p-2 rounded shadow-sm w-100 ${styles.menu}`}>
  
  <a className={`navbar-brand ${styles.logo}`} href="/pizzaria/funcionario/home">
  Auraviva
@@ -33,18 +33,18 @@ return(
  </li>
  <li className="nav-item">
  <a className={`nav-link ${styles.itemMenu}`} href="/pizzaria/funcionario/categorias">
- Categorias
+ Sementes de Verão
  </a>
  </li>
  <li className="nav-item">
  <a className={`nav-link ${styles.itemMenu}`} href="/pizzaria/funcionario/estoques">
- Estoque
+ Sementes de Inverno
  </a>
  </li>
  {/* Dropdown Menu */}
  <li className="nav-item dropdown">
  <a
- className="nav-link dropdown-toggle"
+ className={`nav-link dropdown-toggle ${styles.dropdownToggle}`}
  href="#"
  role="button"
  data-bs-toggle="dropdown"
@@ -78,7 +78,7 @@ return(
  </ul>
  </li>
  <li className="nav-item">
- <a className="nav-link disabled">Desativado</a>
+ <a className={`nav-link disabled ${styles.disabledItem}`}>Desativado</a>
  </li>
  </ul>
 

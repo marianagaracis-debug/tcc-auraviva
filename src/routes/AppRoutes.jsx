@@ -9,7 +9,6 @@ import ListarProduto from "../pages/ListarProduto/ListarProduto"
 import Estoque from "../pages/Estoque/Estoque"
 import Categoria from "../pages/Categoria/Categoria"
 
-
 const AppRoutes = () => {
     return(
     <BrowserRouter>
