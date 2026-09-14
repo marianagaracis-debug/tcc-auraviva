@@ -41,20 +41,19 @@ return(
  Sementes de Inverno
  </a>
  </li>
- {/* Dropdown Menu */}
+ 
  <li className="nav-item dropdown">
  <a
- className={`nav-link dropdown-toggle ${styles.dropdownToggle}`}
+ className={`nav-link dropdown-toggle ${styles.itemMenu}`}
  href="#"
+ id="navbarDropdown"
  role="button"
  data-bs-toggle="dropdown"
-
  aria-expanded="false"
  >
-
  Opções
  </a>
- <ul className="dropdown-menu">
+ <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
  <li>
  <a className="dropdown-item" href="#">
  Ação 1
@@ -62,7 +61,6 @@ return(
  </li>
  <li>
  <a className="dropdown-item" href="#">
-
  Ação 2
  </a>
  </li>
@@ -71,7 +69,6 @@ return(
  </li>
  <li>
  <a className="dropdown-item" href="#">
-
  Outra opção
  </a>
  </li>
