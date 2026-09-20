@@ -1,9 +1,9 @@
-import MenuFuncionario from "../MenuFuncionario/MenuFuncionario"
+import MenuAuraviva from "../MenuAuraviva/MenuAuraviva"
 
-const Categoria = () => {
+const SementesDeVerao = () => {
   return (
     <div className="container">
-      <MenuFuncionario />
+      <MenuAuraviva />
       <style>{`
          /* ==== HERO COM VÍDEO ==== */
 .video-bg {
@@ -130,13 +130,15 @@ const Categoria = () => {
     }
  
     footer {
+      background-color: #010801;
       text-align: center;
-      padding: 2rem;
-      background: rgb(0, 0, 0);
-      backdrop-filter: blur(8px);
-      margin-top: 3rem;
-      color: #ffffff;
+      padding: 20px;
+      color: white;
       font-size: 0.9rem;
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      box-sizing: border-box;
+      margin-top: 3rem;
     }
       `}</style>
       {/* Hero com vídeo */}
@@ -185,4 +187,4 @@ const Categoria = () => {
   )
 }
 
-export default Categoria
+export default SementesDeVerao

@@ -1,13 +1,16 @@
 import{
     BrowserRouter,
     Routes,
-    Route
+    Route,
+    Navigate
 }from "react-router-dom"
 
-import HomeFuncionario from "../pages/HomeFuncionario/HomeFuncionario"
-import ListarProduto from "../pages/ListarProduto/ListarProduto"
-import Estoque from "../pages/Estoque/Estoque"
-import Categoria from "../pages/Categoria/Categoria"
+import HomeAuraviva from "../pages/HomeAuraviva/HomeAuraviva"
+import Blog from "../pages/Blog/Blog"
+import LogIn from "../pages/LogIn/LogIn"
+import Produto from "../pages/Produto/Produto"
+import SementesDeInverno from "../pages/SementesDeInverno/SementesDeInverno"
+import SementesDeVerao from "../pages/SementesDeVerao/SementesDeVerao"
 
 const AppRoutes = () => {
     return(
@@ -16,27 +19,42 @@ const AppRoutes = () => {
 
     <Route
     path="/"
-    element={<HomeFuncionario/>}
+    element={<HomeAuraviva/>}
     />
 
     <Route
-    path="/pizzaria/funcionario/home"
-    element={<HomeFuncionario/>}
+    path="/auraviva/funcionario/home"
+    element={<HomeAuraviva/>}
     />
 
     <Route
-    path="/pizzaria/funcionario/produtos"
-    element={<ListarProduto/>}
+    path="/auraviva/login"
+    element={<LogIn/>}
+    />
+
+    <Route
+    path="/auraviva/blog"
+    element={<Blog/>}
+    />
+
+    <Route
+    path="/auraviva/funcionario/produtos"
+    element={<Produto/>}
+    />
+
+    <Route
+    path="/auraviva/funcionario/sementes-de-inverno"
+    element={<SementesDeInverno/>}
     />
 
     <Route
     path="/pizzaria/funcionario/estoques"
-    element={<Estoque/>}
+    element={<Navigate to="/auraviva/funcionario/sementes-de-inverno" replace/>}
     />
 
     <Route
-    path="/pizzaria/funcionario/categorias"
-    element={<Categoria/>}
+    path="/auraviva/funcionario/sementes-de-verao"
+    element={<SementesDeVerao/>}
     />
 
 

@@ -1,10 +1,10 @@
-import MenuFuncionario from "../MenuFuncionario/MenuFuncionario"
+import MenuAuraviva from "../MenuAuraviva/MenuAuraviva"
 
 const Estoque = () => {
 
 return(
 <div className="container">
-        <MenuFuncionario/>
+        <MenuAuraviva/>
         <style>{`
           /* ==== HERO COM VÍDEO ==== */
 .video-bg {
@@ -134,13 +134,15 @@ return(
     }
  
     footer {
+      background-color: #010801;
       text-align: center;
-      padding: 2rem;
-      background: rgb(2, 1, 1);
-      backdrop-filter: blur(8px);
-      margin-top: 3rem;
-      color: #feffff;
+      padding: 20px;
+      color: white;
       font-size: 0.9rem;
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      box-sizing: border-box;
+      margin-top: 3rem;
     }
     `}</style>
       <div>
