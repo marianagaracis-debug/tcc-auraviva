@@ -1,11 +1,58 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./LogIn.module.css";
 
-const LogIn = () => {
-  const [modoCadastro, setModoCadastro] = useState(false);
+const CHAVE_USUARIO = "auraviva-usuario";
 
-  const alternarModo = () => setModoCadastro((modoAtual) => !modoAtual);
+const LogIn = () => {
+  const navigate = useNavigate();
+  const [modoCadastro, setModoCadastro] = useState(false);
+  const [dados, setDados] = useState({ nome: "", email: "", senha: "", confirmarSenha: "" });
+  const [mensagem, setMensagem] = useState("");
+
+  const alternarModo = () => {
+    setModoCadastro((modoAtual) => !modoAtual);
+    setMensagem("");
+  };
+
+  const atualizarCampo = (event) => {
+    const { name, value } = event.target;
+    setDados((dadosAtuais) => ({ ...dadosAtuais, [name]: value }));
+  };
+
+  const enviarFormulario = (event) => {
+    event.preventDefault();
+    const email = dados.email.trim().toLowerCase();
+
+    if (modoCadastro) {
+      if (dados.senha !== dados.confirmarSenha) {
+        setMensagem("As senhas não coincidem.");
+        return;
+      }
+
+      const usuario = { nome: dados.nome.trim(), email, senha: dados.senha };
+      const usuarioSalvo = JSON.parse(localStorage.getItem(CHAVE_USUARIO) || "null");
+
+      if (usuarioSalvo?.email === email) {
+        setMensagem("Este e-mail já está cadastrado.");
+        return;
+      }
+
+      localStorage.setItem(CHAVE_USUARIO, JSON.stringify(usuario));
+      setMensagem("Cadastro realizado! Agora você já pode entrar.");
+      setDados({ nome: "", email, senha: "", confirmarSenha: "" });
+      setModoCadastro(false);
+      return;
+    }
+
+    const usuarioSalvo = JSON.parse(localStorage.getItem(CHAVE_USUARIO) || "null");
+    if (usuarioSalvo?.email === email && usuarioSalvo.senha === dados.senha) {
+      navigate("/auraviva/funcionario/home");
+      return;
+    }
+
+    setMensagem("E-mail ou senha inválidos.");
+  };
 
   return (
     <main className={styles.page}>
@@ -26,28 +73,28 @@ const LogIn = () => {
           </p>
         </div>
 
-        <form className={styles.formulario} onSubmit={(event) => event.preventDefault()}>
+        <form className={styles.formulario} onSubmit={enviarFormulario}>
           {modoCadastro && (
             <label>
               Nome completo
-              <input type="text" placeholder="Digite seu nome" required />
+              <input name="nome" type="text" placeholder="Digite seu nome" value={dados.nome} onChange={atualizarCampo} required />
             </label>
           )}
 
           <label>
             E-mail
-            <input type="email" placeholder="voce@email.com" required />
+            <input name="email" type="email" placeholder="voce@email.com" value={dados.email} onChange={atualizarCampo} required />
           </label>
 
           <label>
             Senha
-            <input type="password" placeholder="Digite sua senha" required />
+            <input name="senha" type="password" placeholder="Digite sua senha" value={dados.senha} onChange={atualizarCampo} required />
           </label>
 
           {modoCadastro && (
             <label>
               Confirmar senha
-              <input type="password" placeholder="Repita sua senha" required />
+              <input name="confirmarSenha" type="password" placeholder="Repita sua senha" value={dados.confirmarSenha} onChange={atualizarCampo} required />
             </label>
           )}
 
@@ -61,6 +108,8 @@ const LogIn = () => {
             {modoCadastro ? "Criar conta" : "Entrar"}
           </button>
         </form>
+
+        {mensagem && <p className={styles.mensagem} role="status">{mensagem}</p>}
 
         <p className={styles.switchText}>
           {modoCadastro ? "Já possui uma conta?" : "Ainda não possui uma conta?"}{" "}

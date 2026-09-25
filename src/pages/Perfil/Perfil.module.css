@@ -1,0 +1,422 @@
+.page {
+  min-height: calc(100vh - 72px);
+  padding: 38px 24px 72px;
+  background: #f5f8f4;
+  color: #26382f;
+}
+
+.pageInner {
+  width: min(100%, 1240px);
+  margin: 0 auto;
+}
+
+.accountHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 8px 0 28px;
+  border-bottom: 1px solid #dbe4db;
+  text-align: left;
+}
+
+.eyebrow,
+.sectionKicker {
+  color: #62816b;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.accountHeader h1 {
+  margin: 5px 0 0;
+  color: #26382f;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.avatar {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid #d8e4d8;
+  border-radius: 50%;
+  background: #dfece0;
+  color: #356448;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.identityText {
+  display: grid;
+  gap: 3px;
+  color: #6b786e;
+  font-size: 0.8rem;
+}
+
+.identityText strong {
+  color: #26382f;
+  font-size: 1rem;
+}
+
+.photoButton {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #d3dfd3;
+  border-radius: 50%;
+  color: #356448;
+  cursor: pointer;
+}
+
+.photoButton:hover {
+  background: #e7f0e7;
+}
+
+.photoButton input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.photoButton:focus-within {
+  outline: 2px solid #4b865c;
+  outline-offset: 3px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.accountLayout {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  align-items: start;
+  gap: 44px;
+  padding-top: 28px;
+}
+
+.sidebar {
+  display: grid;
+  gap: 3px;
+  padding-right: 18px;
+  border-right: 1px solid #dbe4db;
+  text-align: left;
+}
+
+.navItem {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #58685d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.91rem;
+  text-align: left;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.navItem .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.navItem:hover,
+.navItemActive {
+  background: #e7efe6;
+  color: #28603e;
+}
+
+.navItemActive {
+  font-weight: 700;
+}
+
+.navItem:focus-visible,
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible {
+  outline: 2px solid #4b865c;
+  outline-offset: 2px;
+}
+
+.content {
+  min-width: 0;
+  padding: 4px 0;
+  text-align: left;
+}
+
+.contentHeader {
+  margin-bottom: 28px;
+}
+
+.contentHeader h2 {
+  margin: 7px 0 0;
+  color: #26382f;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.8rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.formHeading {
+  margin-bottom: 22px;
+}
+
+.formHeading h3,
+.emptyState h3 {
+  margin: 0 0 6px;
+  color: #304638;
+  font-size: 1.08rem;
+  font-weight: 600;
+}
+
+.formHeading p,
+.emptyState p,
+.localDataNote {
+  margin: 0;
+  color: #6c786f;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.profileForm {
+  max-width: 720px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.formGrid label {
+  display: grid;
+  gap: 8px;
+  color: #40564a;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.formGrid input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #ccd9cd;
+  border-radius: 4px;
+  background: #fff;
+  color: #26382f;
+  font: inherit;
+}
+
+.formGrid input:focus {
+  border-color: #5e9369;
+  outline: 2px solid rgba(94, 147, 105, 0.18);
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 15px;
+  border: 1px solid #356d48;
+  border-radius: 4px;
+  background: #356d48;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.primaryButton:hover {
+  background: #28583a;
+}
+
+.secondaryButton {
+  background: transparent;
+  color: #356d48;
+}
+
+.secondaryButton:hover {
+  background: #e7efe6;
+}
+
+.accountDetails dl {
+  max-width: 720px;
+  margin: 0 0 22px;
+  border-top: 1px solid #dbe4db;
+}
+
+.accountDetails dl div {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid #dbe4db;
+}
+
+.accountDetails dt {
+  color: #6c786f;
+  font-size: 0.88rem;
+}
+
+.accountDetails dd {
+  margin: 0;
+  color: #304638;
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.localDataNote {
+  margin-top: 20px;
+  font-size: 0.82rem;
+}
+
+.preferences {
+  max-width: 720px;
+}
+
+.preferenceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 17px 0;
+  border-top: 1px solid #dbe4db;
+  cursor: pointer;
+}
+
+.preferenceRow span {
+  display: grid;
+  gap: 4px;
+}
+
+.preferenceRow strong {
+  color: #304638;
+  font-size: 0.92rem;
+}
+
+.preferenceRow small {
+  color: #6c786f;
+  font-size: 0.82rem;
+}
+
+.preferenceRow input {
+  width: 18px;
+  height: 18px;
+  accent-color: #356d48;
+}
+
+.emptyState {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  max-width: 560px;
+  padding: 34px 0;
+}
+
+.emptyIcon {
+  color: #60836a;
+  font-size: 30px;
+}
+
+.emptyState p {
+  margin-bottom: 6px;
+}
+
+.statusMessage {
+  margin: -12px 0 22px;
+  color: #2e7146;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 800px) {
+  .accountLayout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+  }
+
+  .sidebar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 0 0 10px;
+    border-right: 0;
+    border-bottom: 1px solid #dbe4db;
+  }
+
+  .navItem {
+    min-width: max-content;
+  }
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
+  .accountHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .identity {
+    width: 100%;
+  }
+
+  .photoButton {
+    margin-left: auto;
+  }
+
+  .accountLayout {
+    padding-top: 18px;
+  }
+
+  .formGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .accountDetails dl div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+}

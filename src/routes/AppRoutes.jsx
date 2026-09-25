@@ -9,8 +9,10 @@ import HomeAuraviva from "../pages/HomeAuraviva/HomeAuraviva"
 import Blog from "../pages/Blog/Blog"
 import LogIn from "../pages/LogIn/LogIn"
 import Produto from "../pages/Produto/Produto"
+import Carrinho from "../pages/Carrinho/Carrinho"
 import SementesDeInverno from "../pages/SementesDeInverno/SementesDeInverno"
 import SementesDeVerao from "../pages/SementesDeVerao/SementesDeVerao"
+import Perfil from "../pages/Perfil/Perfil"
 
 const AppRoutes = () => {
     return(
@@ -43,14 +45,21 @@ const AppRoutes = () => {
     />
 
     <Route
+    path="/auraviva/carrinho"
+    element={<Carrinho/>}
+    />
+
+    <Route
+    path="/auraviva/perfil"
+    element={<Perfil/>}
+    />
+
+    <Route
     path="/auraviva/funcionario/sementes-de-inverno"
     element={<SementesDeInverno/>}
     />
 
-    <Route
-    path="/pizzaria/funcionario/estoques"
-    element={<Navigate to="/auraviva/funcionario/sementes-de-inverno" replace/>}
-    />
+    
 
     <Route
     path="/auraviva/funcionario/sementes-de-verao"

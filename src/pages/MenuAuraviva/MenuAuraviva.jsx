@@ -1,7 +1,16 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import styles from "./MenuAuraviva.module.css"
 
 const MenuAuraviva = () => {
+const navigate = useNavigate();
+const [searchParams] = useSearchParams();
+
+const pesquisar = (event) => {
+    event.preventDefault();
+    const termo = new FormData(event.currentTarget).get("q")?.toString().trim() || "";
+    const query = termo ? `?q=${encodeURIComponent(termo)}` : "";
+    navigate(`/auraviva/funcionario/produtos${query}`);
+};
 
 return(
 
@@ -53,18 +62,18 @@ return(
  </li>
  </ul>
  <div className={styles.navActions}>
- <form className={styles.searchForm} onSubmit={(event) => event.preventDefault()}>
- <input type="search" placeholder="Pesquisar" aria-label="Pesquisar" />
+ <form className={styles.searchForm} onSubmit={pesquisar}>
+ <input type="search" name="q" placeholder="Pesquisar" aria-label="Pesquisar" defaultValue={searchParams.get("q") || ""} />
  <button type="submit" aria-label="Pesquisar">
  <span className="material-symbols-outlined">search</span>
  </button>
  </form>
- <a className={styles.actionIcon} href="/auraviva/funcionario/produtos" aria-label="Carrinho">
+ <a className={styles.actionIcon} href="/auraviva/carrinho" aria-label="Carrinho">
  <span className="material-symbols-outlined">shopping_bag</span>
  </a>
- <a className={styles.actionIcon} href="#" aria-label="Perfil do usuário">
+ <Link className={styles.actionIcon} to="/auraviva/perfil" aria-label="Meu perfil">
  <span className="material-symbols-outlined">account_circle</span>
- </a>
+ </Link>
  <Link className={styles.loginButton} to="/auraviva/login">Log in</Link>
  </div>
  </div>

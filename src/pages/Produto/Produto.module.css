@@ -1,0 +1,265 @@
+:global(.card) {
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: 0.3s;
+  width: 100%;
+  max-width: 18rem;
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+:global(.card[hidden]) {
+  display: none;
+}
+
+:global(.container) {
+  font-family: "Times New Roman", Times, serif;
+}
+
+.catalogLayout {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  align-items: start;
+  gap: 28px;
+  margin-top: 28px;
+}
+
+.catalogSidebar {
+  position: sticky;
+  top: 96px;
+  padding: 8px 18px 12px 0;
+  border-right: 1px solid #dedede;
+  text-align: left;
+}
+
+.catalogTitle {
+  margin: 0 0 18px;
+  color: #303830;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.filterSection {
+  padding-top: 14px;
+  border-top: 1px solid #dedede;
+}
+
+.filterHeading {
+  margin: 0 0 10px;
+  color: #536153;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.filterOptions {
+  display: grid;
+  gap: 4px;
+}
+
+.filterOption {
+  width: 100%;
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
+  color: #626b62;
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.filterOption:hover,
+.filterOptionActive {
+  color: #2e7d32;
+}
+
+.filterOptionActive {
+  font-weight: 700;
+}
+
+.filterOption:focus-visible {
+  outline: 2px solid #4c8c50;
+  outline-offset: 2px;
+}
+
+.catalogResults {
+  min-width: 0;
+}
+
+.emptyResults {
+  margin: 0 0 16px;
+  color: #59635a;
+  text-align: left;
+}
+
+:global(.cards) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: 16px;
+  justify-content: center;
+  margin-top: 0;
+  margin-bottom: 80px;
+}
+
+:global(.card:hover) {
+  transform: translateY(0px);
+}
+
+:global(.card img) {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+:global(.info) {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+:global(.info h3) {
+  color: #333;
+  margin-bottom: 10px;
+  min-height: 48px;
+}
+
+:global(.categoria-badge) {
+  align-self: flex-start;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  color: #fff;
+  background: #3f8f8f;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 2px;
+}
+
+.productBadges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.productBadges :global(.categoria-badge) {
+  margin-bottom: 0;
+}
+
+.seasonBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 2px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.summerBadge {
+  background: #a66c1f;
+}
+
+.winterBadge {
+  background: #607d8b;
+}
+
+:global(.preco) {
+  color: #4caf50;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+:global(.card button) {
+  width: auto;
+  background: #333;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+:global(.card button:hover) {
+  background: #4caf50;
+}
+
+:global(.quantidade) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 4px 0 10px;
+  border: 1px solid #999;
+}
+
+:global(.quantidade button) {
+  width: 34px;
+  padding: 6px 0;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #555;
+  font-size: 16px;
+  line-height: 1;
+}
+
+:global(.quantidade button:hover) {
+  background: #eee;
+  color: #333;
+}
+
+:global(.quantidade span) {
+  color: #555;
+  font-size: 13px;
+}
+
+:global(.footer) {
+  background-color: #010801;
+  text-align: center;
+  padding: 20px;
+  color: white;
+  font-size: 0.9rem;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  box-sizing: border-box;
+}
+
+@media (max-width: 760px) {
+  .catalogLayout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .catalogSidebar {
+    position: static;
+    padding: 0 0 12px;
+    border-right: 0;
+    border-bottom: 1px solid #dedede;
+  }
+
+  .catalogTitle {
+    margin-bottom: 12px;
+  }
+
+  .filterOptions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+  }
+
+  .filterOption {
+    width: auto;
+  }
+}

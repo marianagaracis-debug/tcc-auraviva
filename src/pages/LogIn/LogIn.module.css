@@ -143,6 +143,14 @@
   text-align: center;
 }
 
+.mensagem {
+  margin: 16px 0 0;
+  color: #216849;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .switchButton:hover,
 .linkButton:hover {
   color: #143f2e;

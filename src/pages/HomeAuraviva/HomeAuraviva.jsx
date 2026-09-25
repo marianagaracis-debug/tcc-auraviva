@@ -27,7 +27,7 @@ const HomeAuraviva = () => {
           <h1>
             Cultivando um futuro que <span>impulsiona</span> a vida.
           </h1>
-          <Link to="/auraviva/funcionario/sementes-de-verao" className={styles.btn}>
+          <Link to="/auraviva/funcionario/produtos" className={styles.btn}>
             Explorar Sementes
           </Link>
         </div>
@@ -116,6 +116,7 @@ const HomeAuraviva = () => {
             <span className={`material-symbols-outlined ${styles.footerIcon}`}>lightbulb</span>
             <h3>Nossa Loja</h3>
             <p><strong>Endereço:</strong> Auraviva</p>
+            <p>Setor agrícola, Brasil</p>
             <p><strong>Email:</strong> contato@auraviva.com</p>
           </div>
 
@@ -124,25 +125,30 @@ const HomeAuraviva = () => {
             <h3>Companhia</h3>
             <ul>
               <li><a href="#">Sobre Nós</a></li>
+              <li><a href="#">Sugestões</a></li>
+              <li><a href="#">Catálogo de Produtos</a></li>
               <li><a href="#">Contato</a></li>
             </ul>
           </div>
 
           <div className={styles.footerCol}>
             <span className={`material-symbols-outlined ${styles.footerIcon}`}>forum</span>
-            <h3>Redes Sociais</h3>
+            <h3>Siga-nos</h3>
             <ul>
               <li><a href="#">Facebook</a></li>
               <li><a href="#">Instagram</a></li>
+              <li><a href="#">YouTube</a></li>
+              <li><a href="#">LinkedIn</a></li>
             </ul>
           </div>
 
           <div className={styles.footerCol}>
             <span className={`material-symbols-outlined ${styles.footerIcon}`}>edit_note</span>
-            <h3>Help</h3>
+            <h3>Ajuda</h3>
             <ul>
-              <li><a href="#">Terms &amp; Condition</a></li>
-              <li><a href="#">Termos de Uso</a></li>
+              <li><a href="#">Termos e Condições</a></li>
+              <li><a href="#">Política de Privacidade</a></li>
+              <li><a href="#">FAQ</a></li>
             </ul>
           </div>
         </div>
@@ -150,16 +156,16 @@ const HomeAuraviva = () => {
         <div className={styles.footerBottom}>
           <div className={styles.subscribeBox}>
             <span className={`material-symbols-outlined ${styles.subscribeIcon}`}>send</span>
-            <h3>Se inscreva </h3>
+            <h3>Inscreva-se</h3>
             <form onSubmit={(event) => event.preventDefault()}>
-              <input type="email" placeholder="Coloque seu email aqui" />
-              <button type="submit">Se inscreva agora</button>
+              <input type="email" placeholder="Digite seu e-mail" aria-label="Digite seu e-mail" required />
+              <button type="submit">Inscreva-se agora</button>
             </form>
           </div>
 
           <div className={styles.paymentInfo}>
-            <h3>Formas de Pagamento</h3>
-            <p>Aceitamos os principais métodos de pagamento:</p>
+            <h3>Informações de Pagamento</h3>
+            <p>Aceitamos os principais métodos de pagamento, incluindo cartão, PIX e PayPal.</p>
             <div className={styles.paymentBrands}>
               <span className={styles.paymentBrand}>VISA</span>
               <span className={`${styles.paymentBrand} ${styles.mastercard}`}>Mastercard</span>
@@ -171,9 +177,14 @@ const HomeAuraviva = () => {
             </div>
           </div>
         </div>
+
+        <div className={styles.footerCopyright}>
+          <br />
+          © {new Date().getFullYear()} Auraviva. Todos os direitos reservados.
+        </div>
       </footer>
     </div>
   );
 };
 
-export default HomeAuraviva;
+export default HomeAuraviva
