@@ -7,21 +7,41 @@
 .page main {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 0 28px 80px;
+  padding: 0 0 80px;
 }
 
 .hero {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   align-items: end;
-  gap: 56px;
-  padding: 92px 0 72px;
-  border-bottom: 1px solid #d5e0d3;
+  width: 100vw;
+  min-height: clamp(360px, 42vw, 620px);
+  margin-left: calc(50% - 50vw);
+  padding: clamp(42px, 5vw, 90px) clamp(28px, 4vw, 60px) clamp(30px, 4vw, 48px);
+  margin-top: 0;
+  border-radius: 0;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgba(9, 27, 18, 0.72), rgba(12, 30, 20, 0.4));
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("https://h2oglobalnews.com/wp-content/uploads/2023/09/Water-Conservation-in-Agriculture.webp") center center / cover no-repeat;
+  transform: scale(1.02);
+  filter: saturate(1.2) brightness(0.88);
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
 }
 
 .eyebrow,
 .kicker {
-  color: #4f8a61;
+  color: #8dbb97;
   font-family: "Playfair Display", serif;
   font-size: 0.82rem;
   font-weight: 700;
@@ -32,7 +52,7 @@
 .hero h1 {
   max-width: 740px;
   margin: 16px 0 18px;
-  color: #163b2a;
+  color: #ffffff;
   font-family: "Playfair Display", serif;
   font-size: clamp(2.7rem, 6vw, 5.5rem);
   line-height: 0.98;
@@ -41,7 +61,7 @@
 
 .hero p {
   max-width: 620px;
-  color: #5d7063;
+  color: rgba(255, 255, 255, 0.82);
   font-size: 1.08rem;
   line-height: 1.65;
 }
@@ -51,17 +71,20 @@
   gap: 9px;
   align-content: start;
   padding: 22px;
-  border-left: 3px solid #70a978;
-  color: #55705c;
+  border-left: 3px solid #dfeec9;
+  border-radius: 18px;
+  background: rgba(15, 35, 26, 0.38);
+  backdrop-filter: blur(4px);
+  color: #ebf7ef;
 }
 
 .heroNote .material-symbols-outlined {
-  color: #3f8756;
+  color: #dff7e4;
   font-size: 30px;
 }
 
 .heroNote strong {
-  color: #234b35;
+  color: #ffffff;
   font-family: "Playfair Display", serif;
   font-size: 1.15rem;
 }
@@ -69,6 +92,7 @@
 .heroNote span:last-child {
   font-size: 0.9rem;
   line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .featureShelf {
@@ -125,6 +149,11 @@
   border: 0;
   background: #3f4840;
   cursor: pointer;
+  text-decoration: none;
+}
+
+.shelfItemUnavailable {
+  cursor: default;
 }
 
 .shelfItem img {
@@ -203,11 +232,24 @@
   font-size: 0.85rem;
 }
 
-.videoGrid,
-.articleGrid {
+.videoGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
+}
+
+.articleGrid {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 2px 2px 18px;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.articleGrid::-webkit-scrollbar {
+  display: none;
 }
 
 .videoCard,
@@ -250,6 +292,7 @@
   color: #fff;
   cursor: pointer;
   transform: translate(-50%, -50%);
+  text-decoration: none;
 }
 
 .playButton .material-symbols-outlined {
@@ -302,6 +345,80 @@
   margin-top: 18px;
 }
 
+.faqContainer {
+  width: 100%;
+  padding: 28px 22px 8px;
+  border: 1px solid #dfe9df;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 12px 26px rgba(30, 60, 42, 0.06);
+}
+
+.faqTitle {
+  margin: 0 0 8px;
+  color: #1d4731;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.7rem, 2.5vw, 2.3rem);
+}
+
+.subtitulo {
+  margin: 0 0 24px;
+  color: #697d6a;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.faq {
+  margin-bottom: 14px;
+  border: 1px solid #e1ebdf;
+  border-radius: 14px;
+  background: #f6faf5;
+  overflow: hidden;
+}
+
+.pergunta {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 0;
+  background: transparent;
+  color: #1d4731;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.pergunta:hover {
+  background: rgba(93, 153, 101, 0.05);
+}
+
+.pergunta span {
+  color: #457d55;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.resposta {
+  display: none;
+  padding: 0 20px 18px;
+  color: #496456;
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.resposta p {
+  margin: 0;
+}
+
+.ativo .resposta {
+  display: block;
+}
+
 .fileList {
   display: grid;
   gap: 10px;
@@ -348,13 +465,69 @@
 
 .articleCard {
   display: flex;
-  min-height: 245px;
+  flex: 0 0 calc((100% - 40px) / 3);
+  min-width: 0;
+  min-height: 420px;
+  flex-direction: column;
+  padding: 0;
+  scroll-snap-align: start;
+}
+
+.articleImage {
+  display: block;
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  border-bottom: 1px solid #dce6da;
+}
+
+.articleContent {
+  display: flex;
+  flex: 1;
   flex-direction: column;
   padding: 26px;
 }
 
+.articleMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.articleAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid #d7e6d5;
+  border-radius: 999px;
+  background: #f5faf6;
+  color: #254b36;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.articleAction:hover {
+  border-color: #8ab58d;
+  transform: translateY(-1px);
+}
+
+.articleAction .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.articleAction.liked {
+  border-color: #e67a7a;
+  background: #fff1f1;
+  color: #b94949;
+}
+
 .articleCategory {
-  margin-bottom: 30px;
+  margin-bottom: 18px;
   color: #5b9768;
   font-size: 0.76rem;
   font-weight: 700;
@@ -364,6 +537,94 @@
 
 .articleCard p {
   flex: 1;
+  margin-bottom: 18px;
+}
+
+.commentPanel {
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e3ebdf;
+}
+
+.commentList {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.commentItem {
+  padding: 10px 12px;
+  border: 1px solid #e5eee2;
+  border-radius: 12px;
+  background: #f7faf7;
+}
+
+.commentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  color: #214d34;
+}
+
+.commentHeader strong {
+  font-size: 0.78rem;
+}
+
+.commentHeader span {
+  color: #7a8d7d;
+  font-size: 0.7rem;
+}
+
+.commentItem p {
+  margin: 0;
+  color: #536b5b;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.commentForm {
+  display: grid;
+  gap: 8px;
+}
+
+.commentLabel {
+  color: #214d34;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.commentForm textarea {
+  width: 100%;
+  min-height: 74px;
+  padding: 12px 14px;
+  border: 1px solid #cfddcf;
+  border-radius: 10px;
+  background: #fff;
+  color: #1d4731;
+  font: inherit;
+  resize: vertical;
+}
+
+.commentForm textarea:focus {
+  outline: 2px solid rgba(79, 146, 89, 0.2);
+  border-color: #7ea87d;
+}
+
+.commentSubmit {
+  justify-self: start;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #31583d;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .readButton,
@@ -384,6 +645,39 @@
 .textLink:hover {
   color: #1f5633;
   text-decoration: underline;
+}
+
+.articleControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.carouselButton {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid #b9cfbc;
+  border-radius: 50%;
+  background: #fff;
+  color: #31583d;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.carouselButton:hover:not(:disabled) {
+  background: #31583d;
+  color: #fff;
+}
+
+.carouselButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.carouselButton .material-symbols-outlined {
+  font-size: 25px;
 }
 
 footer {
@@ -409,9 +703,12 @@ footer {
     padding: 64px 0 52px;
   }
 
-  .videoGrid,
-  .articleGrid {
+  .videoGrid {
     grid-template-columns: 1fr;
+  }
+
+  .articleCard {
+    flex-basis: calc((100% - 20px) / 2);
   }
 
   .heroNote {
@@ -428,6 +725,18 @@ footer {
   .sectionHeader {
     align-items: start;
     flex-direction: column;
+  }
+
+  .articleControls {
+    width: 100%;
+  }
+
+  .articleControls .textLink {
+    margin-left: auto;
+  }
+
+  .articleCard {
+    flex-basis: 100%;
   }
 
   .section,

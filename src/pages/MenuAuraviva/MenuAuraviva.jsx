@@ -9,7 +9,7 @@ const pesquisar = (event) => {
     event.preventDefault();
     const termo = new FormData(event.currentTarget).get("q")?.toString().trim() || "";
     const query = termo ? `?q=${encodeURIComponent(termo)}` : "";
-    navigate(`/auraviva/funcionario/produtos${query}`);
+    navigate(`/auraviva/produtos${query}`);
 };
 
 return(
@@ -17,7 +17,7 @@ return(
     <div className={styles.menuWrapper}>
 <nav className={`navbar navbar-expand-lg navbar-light p-2 shadow-sm w-100 ${styles.menu}`}>
  
- <a className={`navbar-brand ${styles.logo}`} href="/auraviva/funcionario/home">
+ <a className={`navbar-brand ${styles.logo}`} href="/auraviva/home">
  Auraviva
  </a>
  
@@ -37,7 +37,7 @@ return(
  <div className="collapse navbar-collapse" id="navbarSupportedContent">
  <ul className="navbar-nav me-auto">
  <li className="nav-item active">
- <a className={`nav-link ${styles.itemMenu}`} href="/auraviva/funcionario/produtos">
+ <a className={`nav-link ${styles.itemMenu}`} href="/auraviva/produtos">
  Produtos
  </a>
  </li>
@@ -53,10 +53,10 @@ return(
  </button>
  <ul className={styles.sementesSubmenu}>
  <li>
- <a href="/auraviva/funcionario/sementes-de-verao">Sementes de Verão</a>
+ <a href="/auraviva/sementes-de-verao">Sementes de Verão</a>
  </li>
  <li>
- <a href="/auraviva/funcionario/sementes-de-inverno">Sementes de Inverno</a>
+ <a href="/auraviva/sementes-de-inverno">Sementes de Inverno</a>
  </li>
  </ul>
  </li>

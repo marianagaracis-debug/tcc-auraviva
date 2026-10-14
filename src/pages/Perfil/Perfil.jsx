@@ -1,10 +1,71 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
+import { artigos, criarSlugArtigo } from "../Blog/artigos";
 import styles from "./Perfil.module.css";
 
 const CHAVE_USUARIO = "auraviva-usuario";
 const CHAVE_FOTO = "auraviva-foto-perfil";
+const CHAVE_WISHLIST = "auraviva-wishlist";
+const CHAVE_PEDIDOS = "auraviva-pedidos";
+const CHAVE_ENDERECOS = "auraviva-enderecos";
+
+const enderecoVazio = {
+  pais: "Brasil",
+  estado: "",
+  municipio: "",
+  cidade: "",
+  bairro: "",
+  logradouro: "",
+  numero: "",
+  complemento: "",
+  cep: "",
+  referencia: "",
+};
+
+const obterChaveFeedbackBlog = () => {
+  const usuarioSalvo = lerLocalStorage(CHAVE_USUARIO, {});
+  const identificador = (usuarioSalvo.email || usuarioSalvo.nome || "visitante").trim().toLowerCase();
+  return `auraviva-blog-feedback-${identificador || "visitante"}`;
+};
+
+const obterAutorAtual = () => {
+  const usuarioSalvo = lerLocalStorage(CHAVE_USUARIO, {});
+  const nome = (usuarioSalvo.nome || "Você").trim();
+  return nome || "Você";
+};
+
+const etapasPedido = [
+  { id: "recebido", nome: "Pedido recebido" },
+  { id: "preparacao", nome: "Em preparação" },
+  { id: "enviado", nome: "Enviado" },
+  { id: "entrega", nome: "Saiu para entrega" },
+  { id: "entregue", nome: "Entregue" },
+  { id: "cancelado", nome: "Cancelado" },
+];
+
+const formatarData = (data) => new Date(data).toLocaleDateString("pt-BR", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+});
+
+const converterPreco = (valor) => {
+  if (typeof valor === "number") return valor;
+  if (typeof valor !== "string") return Number.NaN;
+
+  const precoNormalizado = valor.replace(/[^\d,.-]/g, "");
+  return Number(precoNormalizado.includes(",")
+    ? precoNormalizado.replace(/\./g, "").replace(",", ".")
+    : precoNormalizado);
+};
+
+const formatarPreco = (valor) => {
+  const preco = converterPreco(valor);
+  return Number.isFinite(preco)
+    ? preco.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    : "Valor indisponível";
+};
 
 const secoes = [
   { id: "perfil", nome: "Meu perfil", icone: "person" },
@@ -57,7 +118,7 @@ const estadosVazios = {
     titulo: "Sua lista de desejos está vazia",
     descricao: "Salve produtos para encontrá-los facilmente quando quiser voltar a eles.",
     acao: "Encontrar sementes",
-    destino: "/auraviva/funcionario/produtos",
+    destino: "/auraviva/produtos",
   },
   eventos: {
     icone: "event",
@@ -80,6 +141,39 @@ const lerLocalStorage = (chave, valorPadrao) => {
   }
 };
 
+const obterComentariosDoBlog = () => {
+  const feedback = lerLocalStorage(obterChaveFeedbackBlog(), {});
+  const autorAtual = obterAutorAtual();
+
+  return Object.entries(feedback).flatMap(([slug, valor]) => {
+    const titulo = artigos.find((artigo) => criarSlugArtigo(artigo.titulo) === slug)?.titulo || slug;
+
+    return (valor?.comments ?? [])
+      .filter((comentario) => {
+        const autor = comentario?.autor;
+        return !autor || autor === autorAtual || autor === "Você";
+      })
+      .map((comentario) => ({
+        ...comentario,
+        slug,
+        titulo,
+      }));
+  });
+};
+
+const obterCurtidasDoBlog = () => {
+  const feedback = lerLocalStorage(obterChaveFeedbackBlog(), {});
+
+  return Object.entries(feedback)
+    .filter(([, valor]) => valor?.liked)
+    .map(([slug, valor]) => ({
+      slug,
+      titulo: artigos.find((artigo) => criarSlugArtigo(artigo.titulo) === slug)?.titulo || slug,
+      likes: valor?.likes ?? 0,
+      data: valor?.curtidoEm || "Hoje",
+    }));
+};
+
 const Perfil = () => {
   const usuarioSalvo = lerLocalStorage(CHAVE_USUARIO, {});
   const [usuario, setUsuario] = useState({
@@ -91,8 +185,16 @@ const Perfil = () => {
     email: usuarioSalvo.email || "",
   });
   const [foto, setFoto] = useState(() => localStorage.getItem(CHAVE_FOTO) || "");
-  const [secaoAtiva, setSecaoAtiva] = useState("perfil");
+  const [searchParams] = useSearchParams();
+  const [secaoAtiva, setSecaoAtiva] = useState(() => searchParams.get("secao") || "perfil");
   const [mensagem, setMensagem] = useState("");
+  const [listaDeDesejos, setListaDeDesejos] = useState(() => lerLocalStorage(CHAVE_WISHLIST, []));
+  const [pedidos, setPedidos] = useState(() => lerLocalStorage(CHAVE_PEDIDOS, []));
+  const [enderecos, setEnderecos] = useState(() => {
+    const salvos = lerLocalStorage(CHAVE_ENDERECOS, []);
+    return Array.isArray(salvos) ? salvos : [];
+  });
+  const [novoEndereco, setNovoEndereco] = useState({ ...enderecoVazio });
   const [preferencias, setPreferencias] = useState(() => lerLocalStorage("auraviva-notificacoes", {
     pedidos: true,
     novidades: false,
@@ -110,6 +212,41 @@ const Perfil = () => {
   const atualizarFormulario = (event) => {
     const { name, value } = event.target;
     setFormulario((atual) => ({ ...atual, [name]: value }));
+  };
+
+  const atualizarEndereco = (event) => {
+    const { name, value } = event.target;
+    setNovoEndereco((atual) => ({ ...atual, [name]: value }));
+  };
+
+  const salvarEndereco = (event) => {
+    event.preventDefault();
+    const endereco = {
+      ...novoEndereco,
+      id: `${Date.now()}`,
+    };
+    const enderecosAtualizados = [...enderecos, endereco];
+
+    try {
+      localStorage.setItem(CHAVE_ENDERECOS, JSON.stringify(enderecosAtualizados));
+      setEnderecos(enderecosAtualizados);
+      setNovoEndereco({ ...enderecoVazio });
+      setMensagem("Endereço adicionado com sucesso.");
+    } catch {
+      setMensagem("Não foi possível salvar o endereço neste navegador.");
+    }
+  };
+
+  const removerEndereco = (id) => {
+    const enderecosAtualizados = enderecos.filter((endereco) => endereco.id !== id);
+
+    try {
+      localStorage.setItem(CHAVE_ENDERECOS, JSON.stringify(enderecosAtualizados));
+      setEnderecos(enderecosAtualizados);
+      setMensagem("Endereço removido.");
+    } catch {
+      setMensagem("Não foi possível remover o endereço neste navegador.");
+    }
   };
 
   const salvarPerfil = (event) => {
@@ -172,7 +309,31 @@ const Perfil = () => {
     localStorage.setItem("auraviva-notificacoes", JSON.stringify(novasPreferencias));
   };
 
+  const removerDaListaDeDesejos = (id) => {
+    const listaAtualizada = listaDeDesejos.filter((produto) => produto.id !== id);
+    setListaDeDesejos(listaAtualizada);
+    localStorage.setItem(CHAVE_WISHLIST, JSON.stringify(listaAtualizada));
+  };
+
+  const atualizarPedido = (id, alteracoes, registrarEtapa = false) => {
+    setPedidos((atuais) => {
+      const atualizados = atuais.map((pedido) => {
+        if (pedido.id !== id) return pedido;
+
+        const historico = registrarEtapa
+          ? [...pedido.historico, { status: alteracoes.status, data: new Date().toISOString() }]
+          : pedido.historico;
+        return { ...pedido, ...alteracoes, historico };
+      });
+      localStorage.setItem(CHAVE_PEDIDOS, JSON.stringify(atualizados));
+      return atualizados;
+    });
+  };
+
   const renderizarConteudo = () => {
+    const comentariosBlog = obterComentariosDoBlog();
+    const curtidasBlog = obterCurtidasDoBlog();
+
     if (secaoAtiva === "perfil") {
       return (
         <form className={styles.profileForm} onSubmit={salvarPerfil}>
@@ -192,6 +353,83 @@ const Perfil = () => {
           </div>
           <button type="submit" className={styles.primaryButton}>Salvar alterações</button>
         </form>
+      );
+    }
+
+    if (secaoAtiva === "enderecos") {
+      return (
+        <div className={styles.addresses}>
+          <form className={styles.addressForm} onSubmit={salvarEndereco}>
+            <div className={styles.formHeading}>
+              <h3>Adicionar endereço</h3>
+              <p>Informe os dados completos para facilitar suas próximas entregas.</p>
+            </div>
+            <div className={styles.formGrid}>
+              <label>
+                País
+                <input name="pais" value={novoEndereco.pais} onChange={atualizarEndereco} autoComplete="country-name" required />
+              </label>
+              <label>
+                Estado / UF
+                <input name="estado" value={novoEndereco.estado} onChange={atualizarEndereco} autoComplete="address-level1" required />
+              </label>
+              <label>
+                Município
+                <input name="municipio" value={novoEndereco.municipio} onChange={atualizarEndereco} required />
+              </label>
+              <label>
+                Cidade
+                <input name="cidade" value={novoEndereco.cidade} onChange={atualizarEndereco} autoComplete="address-level2" required />
+              </label>
+              <label>
+                Bairro
+                <input name="bairro" value={novoEndereco.bairro} onChange={atualizarEndereco} required />
+              </label>
+              <label>
+                Rua / Avenida
+                <input name="logradouro" value={novoEndereco.logradouro} onChange={atualizarEndereco} autoComplete="street-address" required />
+              </label>
+              <label>
+                Número
+                <input name="numero" value={novoEndereco.numero} onChange={atualizarEndereco} required />
+              </label>
+              <label>
+                Complemento
+                <input name="complemento" value={novoEndereco.complemento} onChange={atualizarEndereco} />
+              </label>
+              <label>
+                CEP / Código postal
+                <input name="cep" value={novoEndereco.cep} onChange={atualizarEndereco} autoComplete="postal-code" required />
+              </label>
+              <label>
+                Ponto de referência
+                <input name="referencia" value={novoEndereco.referencia} onChange={atualizarEndereco} />
+              </label>
+            </div>
+            <button type="submit" className={styles.primaryButton}>Adicionar endereço</button>
+          </form>
+
+          {enderecos.length > 0 && (
+            <div className={styles.savedAddresses}>
+              <h3>Endereços cadastrados</h3>
+              {enderecos.map((endereco, indice) => (
+                <article className={styles.addressCard} key={endereco.id}>
+                  <div className={styles.addressCardHeader}>
+                    <h4>Endereço {indice + 1}</h4>
+                    <button type="button" className={styles.secondaryButton} onClick={() => removerEndereco(endereco.id)}>
+                      Remover
+                    </button>
+                  </div>
+                  <p>{endereco.logradouro}, {endereco.numero}{endereco.complemento && ` - ${endereco.complemento}`}</p>
+                  <p>{endereco.bairro}, {endereco.cidade} - {endereco.estado}</p>
+                  <p>{endereco.municipio} · {endereco.cep}</p>
+                  <p>{endereco.pais}{endereco.referencia && ` · Referência: ${endereco.referencia}`}</p>
+                </article>
+              ))}
+            </div>
+          )}
+          <p className={styles.localDataNote}>Seus endereços ficam salvos apenas neste navegador.</p>
+        </div>
       );
     }
 
@@ -248,6 +486,140 @@ const Perfil = () => {
       );
     }
 
+    if (secaoAtiva === "pedidos" && pedidos.length > 0) {
+      return (
+        <div className={styles.orders}>
+          <p className={styles.localDataNote}>Os dados ficam salvos apenas neste navegador e não são sincronizados entre dispositivos.</p>
+          {pedidos.map((pedido) => {
+            const etapaAtual = etapasPedido.findIndex((etapa) => etapa.id === pedido.status);
+            const statusAtual = etapasPedido.find((etapa) => etapa.id === pedido.status)?.nome || "Pedido recebido";
+            const totalPedido = Number.isFinite(pedido.subtotal)
+              ? pedido.subtotal
+              : pedido.itens.reduce((total, item) => total + converterPreco(item.preco) * item.quantidade, 0);
+
+            return (
+              <article className={styles.orderCard} key={pedido.id}>
+                <header className={styles.orderHeader}>
+                  <div>
+                    <span className={styles.orderKicker}>Pedido {pedido.id}</span>
+                    <h3>{formatarData(pedido.criadoEm)}</h3>
+                  </div>
+                  <span className={styles.orderStatus}>{statusAtual}</span>
+                </header>
+
+                <ol className={styles.orderTimeline} aria-label={`Etapas do pedido ${pedido.id}`}>
+                  {etapasPedido.slice(0, 5).map((etapa, indice) => (
+                    <li className={indice <= etapaAtual && pedido.status !== "cancelado" ? styles.completedStep : ""} key={etapa.id}>
+                      <span aria-hidden="true" />
+                      {etapa.nome}
+                    </li>
+                  ))}
+                </ol>
+                {pedido.status === "cancelado" && <p className={styles.cancelledNote}>Este pedido foi cancelado.</p>}
+
+                <div className={styles.orderItems}>
+                  {pedido.itens.map((item) => (
+                    <div key={item.id}>
+                      <span>{item.quantidade} × {item.nome}</span>
+                      <strong>{formatarPreco(converterPreco(item.preco) * item.quantidade)}</strong>
+                    </div>
+                  ))}
+                  <div className={styles.orderTotal}><span>Total</span><strong>{formatarPreco(totalPedido)}</strong></div>
+                </div>
+
+                <div className={styles.deliveryControls}>
+                  <label>
+                    Etapa do pedido
+                    <select value={pedido.status} onChange={(event) => atualizarPedido(pedido.id, { status: event.target.value }, true)}>
+                      {etapasPedido.map((etapa) => <option value={etapa.id} key={etapa.id}>{etapa.nome}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    Código de rastreio
+                    <input
+                      value={pedido.codigoRastreio}
+                      onChange={(event) => atualizarPedido(pedido.id, { codigoRastreio: event.target.value })}
+                      placeholder="Informe ao despachar"
+                    />
+                  </label>
+                  <label>
+                    Previsão de entrega
+                    <input
+                      type="date"
+                      value={pedido.previsaoEntrega}
+                      onChange={(event) => atualizarPedido(pedido.id, { previsaoEntrega: event.target.value })}
+                    />
+                  </label>
+                </div>
+
+                <div className={styles.orderHistory}>
+                  <h4>Histórico de atualizações</h4>
+                  <ul>
+                    {[...pedido.historico].reverse().map((evento, indice) => (
+                      <li key={`${evento.data}-${indice}`}>
+                        <strong>{etapasPedido.find((etapa) => etapa.id === evento.status)?.nome || evento.status}</strong>
+                        <time dateTime={evento.data}>{formatarData(evento.data)}</time>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (secaoAtiva === "comentarios" && comentariosBlog.length > 0) {
+      return (
+        <div className={styles.activityList}>
+          {comentariosBlog.map((comentario) => (
+            <article className={styles.activityCard} key={`${comentario.slug}-${comentario.id}`}>
+              <span className={styles.activityTag}>Comentário</span>
+              <h3>{comentario.titulo}</h3>
+              <p>{comentario.texto}</p>
+              <small>{comentario.data}</small>
+            </article>
+          ))}
+        </div>
+      );
+    }
+
+    if (secaoAtiva === "curtidas" && curtidasBlog.length > 0) {
+      return (
+        <div className={styles.activityList}>
+          {curtidasBlog.map((artigo) => (
+            <article className={styles.activityCard} key={`${artigo.slug}-curtida`}>
+              <span className={styles.activityTag}>Curtida</span>
+              <h3>{artigo.titulo}</h3>
+              <p>Você curtiu este artigo no blog.</p>
+              <small>{artigo.data}</small>
+            </article>
+          ))}
+        </div>
+      );
+    }
+
+    if (secaoAtiva === "desejos" && listaDeDesejos.length > 0) {
+      return (
+        <div className={styles.wishlistGrid}>
+          {listaDeDesejos.map((produto) => (
+            <article className={styles.wishlistItem} key={produto.id}>
+              <img src={produto.imagem} alt={produto.nome} />
+              <div>
+                <span>{produto.categoria}</span>
+                <h3>{produto.nome}</h3>
+                <p>{produto.preco}</p>
+                <button type="button" className={styles.secondaryButton} onClick={() => removerDaListaDeDesejos(produto.id)}>
+                  Remover da lista
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      );
+    }
+
     const estado = estadosVazios[secaoAtiva];
     return (
       <div className={styles.emptyState}>
@@ -255,7 +627,7 @@ const Perfil = () => {
         <h3>{estado.titulo}</h3>
         <p>{estado.descricao}</p>
         {estado.acao && (
-          <Link className={styles.secondaryButton} to={estado.destino || "/auraviva/funcionario/produtos"}>
+          <Link className={styles.secondaryButton} to={estado.destino || "/auraviva/produtos"}>
             {estado.acao}
           </Link>
         )}

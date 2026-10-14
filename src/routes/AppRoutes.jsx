@@ -2,21 +2,32 @@ import{
     BrowserRouter,
     Routes,
     Route,
-    Navigate
+    useLocation
 }from "react-router-dom"
 
 import HomeAuraviva from "../pages/HomeAuraviva/HomeAuraviva"
 import Blog from "../pages/Blog/Blog"
+import Artigo from "../pages/Artigo/Artigo"
 import LogIn from "../pages/LogIn/LogIn"
 import Produto from "../pages/Produto/Produto"
 import Carrinho from "../pages/Carrinho/Carrinho"
 import SementesDeInverno from "../pages/SementesDeInverno/SementesDeInverno"
 import SementesDeVerao from "../pages/SementesDeVerao/SementesDeVerao"
 import Perfil from "../pages/Perfil/Perfil"
+import Intro from "../pages/Intro/Intro"
+import AccessibilityWidget from "../components/AccessibilityWidget"
+
+const IntroOnEntry = () => {
+    const { pathname } = useLocation()
+
+    return pathname === "/" ? <Intro /> : null
+}
 
 const AppRoutes = () => {
     return(
     <BrowserRouter>
+    <IntroOnEntry />
+    <AccessibilityWidget />
     <Routes>
 
     <Route
@@ -25,7 +36,7 @@ const AppRoutes = () => {
     />
 
     <Route
-    path="/auraviva/funcionario/home"
+    path="/auraviva/home"
     element={<HomeAuraviva/>}
     />
 
@@ -40,7 +51,12 @@ const AppRoutes = () => {
     />
 
     <Route
-    path="/auraviva/funcionario/produtos"
+    path="/auraviva/blog/:slug"
+    element={<Artigo/>}
+    />
+
+    <Route
+    path="/auraviva/produtos"
     element={<Produto/>}
     />
 
@@ -55,14 +71,14 @@ const AppRoutes = () => {
     />
 
     <Route
-    path="/auraviva/funcionario/sementes-de-inverno"
+    path="/auraviva/sementes-de-inverno"
     element={<SementesDeInverno/>}
     />
 
     
 
     <Route
-    path="/auraviva/funcionario/sementes-de-verao"
+    path="/auraviva/sementes-de-verao"
     element={<SementesDeVerao/>}
     />
 

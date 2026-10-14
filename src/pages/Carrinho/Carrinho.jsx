@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
 import styles from "./Carrinho.module.css";
 
@@ -9,6 +9,7 @@ const formatarPreco = (valor) =>
   valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const Carrinho = () => {
+  const navigate = useNavigate();
   const [itens, setItens] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(CHAVE_CARRINHO)) || [];
@@ -36,6 +37,33 @@ const Carrinho = () => {
   const subtotal = itens.reduce((total, item) => total + item.preco * item.quantidade, 0);
   const totalItens = itens.reduce((total, item) => total + item.quantidade, 0);
 
+  const finalizarPedido = (event) => {
+    let pedidos;
+    try {
+      const valorSalvo = localStorage.getItem("auraviva-pedidos");
+      pedidos = valorSalvo ? JSON.parse(valorSalvo) : [];
+    } catch {
+      pedidos = [];
+    }
+
+    const criadoEm = new Date().toISOString();
+    const pedido = {
+      id: `AV-${criadoEm.replace(/\D/g, "")}-${Math.round(event.timeStamp).toString(36).toUpperCase()}`,
+      criadoEm,
+      status: "recebido",
+      itens,
+      subtotal,
+      codigoRastreio: "",
+      previsaoEntrega: "",
+      historico: [{ status: "recebido", data: criadoEm }],
+    };
+
+    localStorage.setItem("auraviva-pedidos", JSON.stringify([pedido, ...pedidos]));
+    localStorage.setItem(CHAVE_CARRINHO, JSON.stringify([]));
+    setItens([]);
+    navigate("/auraviva/perfil?secao=pedidos");
+  };
+
   return (
     <div className={styles.page}>
       <MenuAuraviva />
@@ -54,7 +82,7 @@ const Carrinho = () => {
             <span className="material-symbols-outlined">shopping_bag</span>
             <h2>Seu carrinho está vazio</h2>
             <p>Escolha suas sementes favoritas e elas aparecerão aqui.</p>
-            <Link to="/auraviva/funcionario/produtos" className={styles.primaryButton}>Explorar produtos</Link>
+            <Link to="/auraviva/produtos" className={styles.primaryButton}>Explorar produtos</Link>
           </section>
         ) : (
           <div className={styles.layout}>
@@ -85,8 +113,8 @@ const Carrinho = () => {
               <div><span>Subtotal</span><strong>{formatarPreco(subtotal)}</strong></div>
               <div><span>Entrega</span><strong className={styles.free}>Grátis</strong></div>
               <div className={styles.total}><span>Total</span><strong>{formatarPreco(subtotal)}</strong></div>
-              <button type="button" className={styles.primaryButton} onClick={() => window.alert("Pedido pronto para finalização!")}>Finalizar pedido</button>
-              <Link to="/auraviva/funcionario/produtos" className={styles.continue}>Continuar comprando</Link>
+              <button type="button" className={styles.primaryButton} onClick={finalizarPedido}>Finalizar pedido</button>
+              <Link to="/auraviva/produtos" className={styles.continue}>Continuar comprando</Link>
             </aside>
           </div>
         )}

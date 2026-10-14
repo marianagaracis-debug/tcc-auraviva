@@ -4,10 +4,14 @@ import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
 import styles from "./HomeAuraviva.module.css";
 
 const perguntas = [
-  ["O que é a Auraviva?", "A Auraviva é uma empresa especializada na revenda de sementes para o setor agrícola."],
-  ["Como posso entrar em contato?", "Você pode entrar em contato através do nosso formulário ou e-mail."],
-  ["O que fazer caso o lacre esteja violado?", "Devolva o produto imediatamente e solicite o reembolso."],
-  ["Como escolher a melhor semente?", "Considere a estação, o clima da sua região e o tipo de cultivo desejado."],
+  ["O que é a Auraviva?",
+  "A Auraviva é uma empresa voltada à comercialização e distribuição de sementes, buscando conectar produtores rurais a produtos de qualidade por meio de parceiros especializados. Nosso objetivo é facilitar o acesso a sementes adequadas às diferentes necessidades do cultivo, oferecendo informações que auxiliem os agricultores na escolha dos produtos e contribuam para uma agricultura mais eficiente e sustentável."],
+  ["Como posso entrar em contato?", 
+  "Você pode entrar em contato com a equipe da Auraviva pelos canais de atendimento disponibilizados em nosso site, na seção Contato. Por meio deles, você poderá esclarecer dúvidas sobre produtos, pedidos, entregas e outras informações. Recomendamos informar o motivo do contato e, caso já tenha realizado uma compra, o número do pedido para facilitar o atendimento."],
+  ["O que fazer caso o lacre esteja violado?",
+  "Caso receba um produto com o lacre violado, a embalagem danificada ou sinais de alteração, recomendamos não utilizar as sementes antes de esclarecer a situação. Registre o estado da embalagem, guarde o produto e entre em contato com a equipe da Auraviva, informando o ocorrido e os dados do pedido. Assim, será possível avaliar o caso e orientar você sobre os próximos passos."],
+  ["Como escolher a melhor semente?", 
+  "A escolha da semente ideal depende de fatores como o tipo de cultura, as condições climáticas da região, as características do solo, a época de plantio e os objetivos da produção. Também é importante verificar as informações técnicas do produto, sua adaptação à região e as recomendações de cultivo. Em caso de dúvida, consulte um profissional de assistência técnica agrícola para identificar a opção mais adequada às suas necessidades."],
 ];
 
 const HomeAuraviva = () => {
@@ -27,7 +31,7 @@ const HomeAuraviva = () => {
           <h1>
             Cultivando um futuro que <span>impulsiona</span> a vida.
           </h1>
-          <Link to="/auraviva/funcionario/produtos" className={styles.btn}>
+          <Link to="/auraviva/produtos" className={styles.btn}>
             Explorar Sementes
           </Link>
         </div>
@@ -51,21 +55,21 @@ const HomeAuraviva = () => {
           <img src="https://images.pexels.com/photos/2850521/pexels-photo-2850521.jpeg" alt="Sementes de verão" />
           <h3>Sementes de Verão</h3>
           <p>Descubra espécies que florescem sob o sol e trazem energia ao seu jardim.</p>
-          <Link to="/auraviva/funcionario/sementes-de-verao" className={styles.btn}>Explorar</Link>
+          <Link to="/auraviva/sementes-de-verao" className={styles.btn}>Explorar</Link>
         </div>
 
         <div className={styles.card}>
           <img src="https://images.pexels.com/photos/7538372/pexels-photo-7538372.jpeg" alt="Produtos" />
           <h3>Produtos</h3>
           <p>Veja nossos produtos e encontre sementes para o seu cultivo.</p>
-          <Link to="/auraviva/funcionario/produtos" className={styles.btn}>Ver mais</Link>
+          <Link to="/auraviva/produtos" className={styles.btn}>Ver mais</Link>
         </div>
 
         <div className={styles.card}>
           <img src="https://images.pexels.com/photos/10150783/pexels-photo-10150783.jpeg" alt="Sementes de inverno" />
           <h3>Sementes de Inverno</h3>
           <p>Explore plantas resistentes para as estações frias.</p>
-          <Link to="/auraviva/funcionario/sementes-de-inverno" className={styles.btn}>Explorar</Link>
+          <Link to="/auraviva/sementes-de-inverno" className={styles.btn}>Explorar</Link>
         </div>
       </section>
 
@@ -123,33 +127,33 @@ const HomeAuraviva = () => {
           <div className={styles.footerCol}>
             <span className={`material-symbols-outlined ${styles.footerIcon}`}>campaign</span>
             <h3>Companhia</h3>
-            <ul>
-              <li><a href="#">Sobre Nós</a></li>
-              <li><a href="#">Sugestões</a></li>
-              <li><a href="#">Catálogo de Produtos</a></li>
-              <li><a href="#">Contato</a></li>
-            </ul>
+            
+              <p><a href="#">Sobre Nós</a></p>
+              <p><a href="#">Sugestões</a></p>
+              <p><a href="#">Catálogo de Produtos</a></p>
+              <p><a href="#">Contato</a></p>
+            
           </div>
 
           <div className={styles.footerCol}>
             <span className={`material-symbols-outlined ${styles.footerIcon}`}>forum</span>
             <h3>Siga-nos</h3>
-            <ul>
-              <li><a href="#">Facebook</a></li>
-              <li><a href="#">Instagram</a></li>
-              <li><a href="#">YouTube</a></li>
-              <li><a href="#">LinkedIn</a></li>
-            </ul>
+            
+              <p><a href="#">Facebook</a></p>
+              <p><a href="#">Instagram</a></p>
+              <p><a href="#">YouTube</a></p>
+              <p><a href="#">LinkedIn</a></p>
+            
           </div>
 
           <div className={styles.footerCol}>
             <span className={`material-symbols-outlined ${styles.footerIcon}`}>edit_note</span>
             <h3>Ajuda</h3>
-            <ul>
-              <li><a href="#">Termos e Condições</a></li>
-              <li><a href="#">Política de Privacidade</a></li>
-              <li><a href="#">FAQ</a></li>
-            </ul>
+            
+              <p><a href="#">Termos e Condições</a></p>
+              <p><a href="#">Política de Privacidade</a></p>
+              <p><a href="#">FAQ</a></p>
+            
           </div>
         </div>
 
@@ -157,6 +161,7 @@ const HomeAuraviva = () => {
           <div className={styles.subscribeBox}>
             <span className={`material-symbols-outlined ${styles.subscribeIcon}`}>send</span>
             <h3>Inscreva-se</h3>
+            <br/>
             <form onSubmit={(event) => event.preventDefault()}>
               <input type="email" placeholder="Digite seu e-mail" aria-label="Digite seu e-mail" required />
               <button type="submit">Inscreva-se agora</button>

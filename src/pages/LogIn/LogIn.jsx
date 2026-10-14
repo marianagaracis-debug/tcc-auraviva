@@ -47,7 +47,7 @@ const LogIn = () => {
 
     const usuarioSalvo = JSON.parse(localStorage.getItem(CHAVE_USUARIO) || "null");
     if (usuarioSalvo?.email === email && usuarioSalvo.senha === dados.senha) {
-      navigate("/auraviva/funcionario/home");
+      navigate("/auraviva/home");
       return;
     }
 
@@ -59,7 +59,7 @@ const LogIn = () => {
       <div className={styles.backgroundShape} aria-hidden="true" />
 
       <section className={styles.panel} aria-labelledby="login-titulo">
-        <Link to="/auraviva/funcionario/home" className={styles.logo}>
+        <Link to="/auraviva/home" className={styles.logo}>
           Auraviva
         </Link>
 

@@ -1,55 +1,183 @@
+import { useState } from "react"
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva"
+import { produtos } from "../Produto/Produto"
+import ProductDetailsModal from "../../components/ProductDetailsModal"
+import { adicionarProdutoAoCarrinho } from "../../utils/carrinho"
 import styles from "./SementesDeInverno.module.css"
 
+const categorias = [
+  { id: "todos", label: "Todos" },
+  { id: "graos", label: "Grãos" },
+  { id: "leguminosas", label: "Leguminosas" },
+  { id: "vegetais", label: "Vegetais" },
+  { id: "outros", label: "Outros cultivos" },
+]
+
 const SementesDeInverno = () => {
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState("todos")
+  const [termoBusca, setTermoBusca] = useState("")
+  const [quantidades, setQuantidades] = useState({})
+  const [produtoSelecionado, setProdutoSelecionado] = useState(null)
+  const [mensagemCarrinho, setMensagemCarrinho] = useState("")
 
-return(
-<div className="container">
-        <MenuAuraviva/>
-      <div>
-        {/* Hero com vídeo */}
-        <section className={styles["hero-video"]}>
-          <video autoPlay muted loop playsInline className={styles["video-bg"]}>
-            <source src="https://www.pexels.com/pt-br/download/video/10286825/" type="video/mp4" />
-            Seu navegador não suporta vídeos em HTML5.
-          </video>
- 
-          <h1>Descubra a beleza das plantas que florescem nas estações <span>frias.</span> Resistentes, elegantes e cheias de serenidade.</h1>
-        </section>
-        <section className={styles.cards}>
-          <div className={styles.card}>
-            <img src="https://dicasdeplantas.com.br/wp-content/uploads/2023/12/camelia02.jpg" alt="Camélia" />
-            <div className={styles["card-content"]}>
-              <h3>Camélia</h3>
-              <p>Uma flor clássica e elegante que floresce mesmo nos dias mais frios.</p>
-              <button className={styles["buy-btn"]}>Comprar</button>
-            </div>
-          </div>
- 
-          <div className={styles.card}>
-            <img src="https://images.pexels.com/photos/7717990/pexels-photo-7717990.jpeg" alt="Azaleia" />
-            <div className={styles["card-content"]}>
-              <h3>Azaleia</h3>
-              <p>Vibrante e resistente, perfeita para trazer cor ao inverno.</p>
-              <button className={styles["buy-btn"]}>Comprar</button>
-            </div>
-          </div>
- 
-          <div className={styles.card}>
-            <img src="https://blog.plantie.com.br/wp-content/uploads/2022/09/Planta-hera-como-cuidar.png" alt="Hera" />
-            <div className={styles["card-content"]}>
-              <h3>Hera</h3>
-              <p>Simboliza força e persistência, ideal para o frio intenso.</p>
-              <button className={styles["buy-btn"]}>Comprar</button>
-            </div>
-          </div>
+  const produtosDeInverno = produtos.filter((produto) => produto.estacaoId === "inverno")
+  const normalizar = (texto) => texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
 
-        </section>
- 
-        <footer>
-          © 2025 Auraviva | Cresça com propósito 🌿
-        </footer>
+  const produtosDaCategoria = categoriaSelecionada === "todos"
+    ? produtosDeInverno
+    : produtosDeInverno.filter((produto) => produto.categoriaId === categoriaSelecionada)
+  const produtosFiltrados = produtosDaCategoria.filter((produto) =>
+    normalizar(produto.nome).includes(normalizar(termoBusca.trim()))
+  )
+
+  const alterarQuantidade = (nome, variacao) => {
+    setQuantidades((atuais) => ({
+      ...atuais,
+      [nome]: Math.max(1, (atuais[nome] || 1) + variacao),
+    }))
+  }
+
+  const comprarProduto = (produto) => {
+    adicionarProdutoAoCarrinho(produto, quantidades[produto.nome] || 1)
+    setMensagemCarrinho(`${produto.nome} adicionado ao carrinho.`)
+  }
+
+  return (
+    <div className="container">
+      <MenuAuraviva />
+
+      <section className={styles["hero-video"]}>
+        <video autoPlay muted loop playsInline className={styles["video-bg"]}>
+          <source src="https://www.pexels.com/pt-br/download/video/10286825/" type="video/mp4" />
+        </video>
+
+        <h1>
+          Descubra a beleza das plantas que florescem nas estações <span>frias.</span>
+          Resistentes, elegantes e cheias de serenidade.
+        </h1>
+      </section>
+
+      <section className={styles.sowingInfo} aria-label="Informações de semeadura para o inverno">
+        <table className={styles.sowingTable}>
+          <thead>
+            <tr>
+              <th scope="col">Temperatura de semeadura</th>
+              <th scope="col">Meses de semeadura</th>
+              <th scope="col">Temperatura na sua região?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>22–25 °C</td>
+              <td>Ago | Set | Out | Nov</td>
+              <td>A época de semeadura pode variar conforme o local.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <br/>
+
+      <div className={styles.catalogLayout}>
+        <aside className={styles.catalogSidebar}>
+          <h2 className={styles.catalogTitle}>Categorias</h2>
+
+          <div className={styles.filterSection}>
+            {categorias.map((categoria) => (
+              <button
+                key={categoria.id}
+                type="button"
+                className={`${styles.filterOption} ${categoriaSelecionada === categoria.id ? styles.filterOptionActive : ""}`}
+                onClick={() => setCategoriaSelecionada(categoria.id)}
+              >
+                {categoria.label}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <main className={styles.catalogResults}>
+          <div className={styles.searchGroup}>
+            <label className={styles.searchLabel} htmlFor="busca-produto-inverno">
+              Encontre sua semente
+            </label>
+            <div className={styles.searchBox}>
+              <span className={`material-symbols-outlined ${styles.searchIcon}`} aria-hidden="true">
+                search
+              </span>
+              <input
+                id="busca-produto-inverno"
+                className={styles.searchInput}
+                type="search"
+                placeholder="Buscar pelo nome do produto..."
+                value={termoBusca}
+                onChange={(event) => setTermoBusca(event.target.value)}
+              />
+            </div>
+          </div>
+          {produtosFiltrados.length === 0 && (
+            <p className={styles.emptyResults} role="status">
+              Nenhum produto encontrado{termoBusca.trim() ? ` para "${termoBusca.trim()}"` : ""}.
+            </p>
+          )}
+          {mensagemCarrinho && <p role="status">{mensagemCarrinho}</p>}
+          <div className="cards">
+            {produtosFiltrados.map((produto) => (
+              <div
+                className="card"
+                key={produto.nome}
+                onClick={(event) => {
+                  if (event.target.closest("button")) return
+                  setProdutoSelecionado(produto)
+                }}
+              >
+                <img src={produto.imagem} alt={produto.alt} />
+                <div className="info">
+                  <div className={styles.productBadges}>
+                    <span className="categoria-badge" data-categoria={produto.categoriaId}>{produto.categoria}</span>
+                    <span className={styles.seasonBadge}>{produto.estacao}</span>
+                  </div>
+                  <h3>{produto.nome}</h3>
+                  <p className="preco">{produto.preco}</p>
+                  <div className={styles.quantityControl} aria-label={`Quantidade de ${produto.nome}`}>
+                    <button
+                      type="button"
+                      onClick={() => alterarQuantidade(produto.nome, -1)}
+                      aria-label={`Diminuir quantidade de ${produto.nome}`}
+                    >
+                      −
+                    </button>
+                    <span>{quantidades[produto.nome] || 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => alterarQuantidade(produto.nome, 1)}
+                      aria-label={`Aumentar quantidade de ${produto.nome}`}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <button type="button" onClick={() => comprarProduto(produto)}>Comprar</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
       </div>
+
+      {produtoSelecionado && (
+        <ProductDetailsModal
+          produto={produtoSelecionado}
+          onClose={() => setProdutoSelecionado(null)}
+          onAdded={() => {
+            setMensagemCarrinho(`${produtoSelecionado.nome} adicionado ao carrinho.`)
+            setProdutoSelecionado(null)
+          }}
+        />
+      )}
+
+      <footer>© 2025 Auraviva | Cresça com propósito 🌿</footer>
     </div>
   )
 }
