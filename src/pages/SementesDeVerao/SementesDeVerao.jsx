@@ -1,6 +1,7 @@
 import { useState } from "react"
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva"
 import { produtos } from "../Produto/Produto"
+import { obterProdutosAtivos } from "../../utils/gestaoLoja"
 import ProductDetailsModal from "../../components/ProductDetailsModal"
 import { adicionarProdutoAoCarrinho } from "../../utils/carrinho"
 import styles from "./SementesDeVerao.module.css"
@@ -22,7 +23,7 @@ const SementesDeVerao = () => {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null)
   const [mensagemCarrinho, setMensagemCarrinho] = useState("")
 
-  const produtosDeVerao = produtos.filter((produto) => produto.estacaoId === "verao")
+  const produtosDeVerao = obterProdutosAtivos(produtos).filter((produto) => produto.estacaoId === "verao")
   const normalizar = (texto) => texto
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")

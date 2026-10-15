@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
+import { lerDadosLocais } from "../../utils/gestaoLoja";
 import styles from "./Carrinho.module.css";
 
 const CHAVE_CARRINHO = "auraviva-carrinho";
@@ -47,12 +48,20 @@ const Carrinho = () => {
     }
 
     const criadoEm = new Date().toISOString();
+    const cliente = lerDadosLocais("auraviva-sessao", null);
+    const enderecos = lerDadosLocais("auraviva-enderecos", []);
     const pedido = {
       id: `AV-${criadoEm.replace(/\D/g, "")}-${Math.round(event.timeStamp).toString(36).toUpperCase()}`,
       criadoEm,
       status: "recebido",
       itens,
       subtotal,
+      cliente: cliente?.tipoPerfil === "cliente"
+        ? { nome: cliente.nome, email: cliente.email }
+        : null,
+      enderecoEntrega: cliente?.tipoPerfil === "cliente" && Array.isArray(enderecos)
+        ? enderecos.filter((endereco) => endereco.email === cliente.email).at(-1) || null
+        : null,
       codigoRastreio: "",
       previsaoEntrega: "",
       historico: [{ status: "recebido", data: criadoEm }],

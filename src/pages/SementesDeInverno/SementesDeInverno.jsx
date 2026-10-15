@@ -1,6 +1,7 @@
 import { useState } from "react"
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva"
 import { produtos } from "../Produto/Produto"
+import { obterProdutosAtivos } from "../../utils/gestaoLoja"
 import ProductDetailsModal from "../../components/ProductDetailsModal"
 import { adicionarProdutoAoCarrinho } from "../../utils/carrinho"
 import styles from "./SementesDeInverno.module.css"
@@ -20,7 +21,7 @@ const SementesDeInverno = () => {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null)
   const [mensagemCarrinho, setMensagemCarrinho] = useState("")
 
-  const produtosDeInverno = produtos.filter((produto) => produto.estacaoId === "inverno")
+  const produtosDeInverno = obterProdutosAtivos(produtos).filter((produto) => produto.estacaoId === "inverno")
   const normalizar = (texto) => texto
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")

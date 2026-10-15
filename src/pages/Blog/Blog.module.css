@@ -345,6 +345,15 @@
   margin-top: 18px;
 }
 
+.resourceMascot {
+  display: block;
+  width: min(100%, 280px);
+  max-height: 370px;
+  margin: 24px auto 0;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
 .faqContainer {
   width: 100%;
   padding: 28px 22px 8px;

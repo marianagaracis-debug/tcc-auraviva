@@ -74,6 +74,23 @@ const AcompanhamentoPedidos = ({ pedidos, modoGestao = false, atualizarPedido })
             <div className={styles.orderTotal}><span>Total</span><strong>{formatarPreco(totalPedido)}</strong></div>
           </div>
 
+          {(pedido.cliente || pedido.enderecoEntrega || pedido.pagamento) && (
+            <dl className={styles.deliveryInfo}>
+              {pedido.cliente && <>
+                <div><dt>Cliente</dt><dd>{pedido.cliente.nome || "Não informado"}</dd></div>
+                <div><dt>E-mail</dt><dd>{pedido.cliente.email || "Não informado"}</dd></div>
+              </>}
+              {pedido.enderecoEntrega && (
+                <div><dt>Endereço de entrega</dt><dd>
+                  {[pedido.enderecoEntrega.logradouro, pedido.enderecoEntrega.numero, pedido.enderecoEntrega.bairro,
+                    pedido.enderecoEntrega.cidade, pedido.enderecoEntrega.estado, pedido.enderecoEntrega.cep]
+                    .filter(Boolean).join(", ") || "Endereço não informado"}
+                </dd></div>
+              )}
+              {pedido.pagamento && <div><dt>Pagamento</dt><dd>{pedido.pagamento}</dd></div>}
+            </dl>
+          )}
+
           {modoGestao ? (
             <div className={styles.deliveryControls}>
               <label>
@@ -88,6 +105,14 @@ const AcompanhamentoPedidos = ({ pedidos, modoGestao = false, atualizarPedido })
                   value={pedido.codigoRastreio || ""}
                   onChange={(event) => atualizarPedido(pedido.id, { codigoRastreio: event.target.value })}
                   placeholder="Informe ao despachar"
+                />
+              </label>
+              <label>
+                Lote / referência
+                <input
+                  value={pedido.lote || ""}
+                  onChange={(event) => atualizarPedido(pedido.id, { lote: event.target.value })}
+                  placeholder="Quando aplicável"
                 />
               </label>
               <label>

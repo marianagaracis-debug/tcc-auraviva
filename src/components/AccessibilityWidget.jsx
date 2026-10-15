@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./AccessibilityWidget.css";
 
 const STORAGE_KEY = "auraviva-acessibilidade";
+const MIN_FONT_SIZE = 80;
+const MAX_FONT_SIZE = 150;
+const MIN_LINE_HEIGHT = 1.2;
+const MAX_LINE_HEIGHT = 2.5;
 
 const DEFAULT_SETTINGS = {
   fontSize: 100,
@@ -21,15 +25,39 @@ const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const readSavedSettings = () => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
+    const parsed = saved ? JSON.parse(saved) : null;
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return { ...DEFAULT_SETTINGS };
+    }
+
+    return {
+      fontSize: Number.isFinite(parsed.fontSize)
+        ? clamp(parsed.fontSize, MIN_FONT_SIZE, MAX_FONT_SIZE)
+        : DEFAULT_SETTINGS.fontSize,
+      lineHeight: Number.isFinite(parsed.lineHeight)
+        ? clamp(parsed.lineHeight, MIN_LINE_HEIGHT, MAX_LINE_HEIGHT)
+        : DEFAULT_SETTINGS.lineHeight,
+      letterSpacing: typeof parsed.letterSpacing === "boolean" ? parsed.letterSpacing : DEFAULT_SETTINGS.letterSpacing,
+      highContrast: typeof parsed.highContrast === "boolean" ? parsed.highContrast : DEFAULT_SETTINGS.highContrast,
+      darkContrast: typeof parsed.darkContrast === "boolean" ? parsed.darkContrast : DEFAULT_SETTINGS.darkContrast,
+      invert: typeof parsed.invert === "boolean" ? parsed.invert : DEFAULT_SETTINGS.invert,
+      grayscale: typeof parsed.grayscale === "boolean" ? parsed.grayscale : DEFAULT_SETTINGS.grayscale,
+      highSaturation: typeof parsed.highSaturation === "boolean" ? parsed.highSaturation : DEFAULT_SETTINGS.highSaturation,
+      readingGuide: typeof parsed.readingGuide === "boolean" ? parsed.readingGuide : DEFAULT_SETTINGS.readingGuide,
+      readingMask: typeof parsed.readingMask === "boolean" ? parsed.readingMask : DEFAULT_SETTINGS.readingMask,
+    };
   } catch {
-    return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS };
   }
 };
 
 export default function Accessibility() {
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState(readSavedSettings);
+  const triggerRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const wasOpenRef = useRef(false);
 
   const updateSetting = (key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -66,6 +94,28 @@ export default function Accessibility() {
       return next;
     });
   };
+
+  useEffect(() => {
+    if (!open) {
+      if (wasOpenRef.current) {
+        triggerRef.current?.focus();
+        wasOpenRef.current = false;
+      }
+      return undefined;
+    }
+
+    wasOpenRef.current = true;
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -164,40 +214,57 @@ export default function Accessibility() {
   };
 
   const increaseLineHeight = () => {
-    setSettings((prev) => ({ ...prev, lineHeight: Number((prev.lineHeight + 0.1).toFixed(1)) }));
+    setSettings((prev) => ({
+      ...prev,
+      lineHeight: clamp(Number((prev.lineHeight + 0.1).toFixed(1)), MIN_LINE_HEIGHT, MAX_LINE_HEIGHT),
+    }));
   };
 
   const decreaseLineHeight = () => {
-    setSettings((prev) => ({ ...prev, lineHeight: Number((prev.lineHeight - 0.1).toFixed(1)) }));
+    setSettings((prev) => ({
+      ...prev,
+      lineHeight: clamp(Number((prev.lineHeight - 0.1).toFixed(1)), MIN_LINE_HEIGHT, MAX_LINE_HEIGHT),
+    }));
   };
 
   return (
     <>
       <button
+        ref={triggerRef}
+        type="button"
         className="accessibility-button"
         onClick={() => setOpen((prev) => !prev)}
-        aria-label="Abrir opções de acessibilidade"
+        aria-label={open ? "Fechar opções de acessibilidade" : "Abrir opções de acessibilidade"}
         aria-expanded={open}
-        aria-controls="accessibility-panel"
+        aria-controls={open ? "accessibility-panel" : undefined}
       >
-        🌻
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="4" r="2" />
+          <path d="M4 8h16M12 8v5m-4 9 4-9 4 9" />
+        </svg>
       </button>
 
       {open && (
-        <div id="accessibility-panel" className="accessibility-panel">
+        <div
+          id="accessibility-panel"
+          className="accessibility-panel"
+          role="region"
+          aria-labelledby="accessibility-title"
+        >
           <div className="accessibility-header">
             <div>
               <span className="accessibility-icon" aria-hidden="true">🌻</span>
-              <h2>Acessibilidade</h2>
+              <h2 id="accessibility-title">Acessibilidade</h2>
             </div>
 
             <button
+              ref={closeButtonRef}
               type="button"
               className="close-accessibility"
               onClick={() => setOpen(false)}
               aria-label="Fechar acessibilidade"
             >
-              ×
+              x
             </button>
           </div>
 
@@ -255,7 +322,12 @@ export default function Accessibility() {
               <h3>🔤 Texto</h3>
 
               <div className="font-buttons">
-                <button type="button" onClick={decreaseFont} aria-label="Diminuir tamanho do texto">
+                <button
+                  type="button"
+                  onClick={decreaseFont}
+                  aria-label="Diminuir tamanho do texto"
+                  disabled={settings.fontSize <= MIN_FONT_SIZE}
+                >
                   A−
                   <span>Diminuir</span>
                 </button>
@@ -264,14 +336,24 @@ export default function Accessibility() {
                   {settings.fontSize}%
                 </div>
 
-                <button type="button" onClick={increaseFont} aria-label="Aumentar tamanho do texto">
+                <button
+                  type="button"
+                  onClick={increaseFont}
+                  aria-label="Aumentar tamanho do texto"
+                  disabled={settings.fontSize >= MAX_FONT_SIZE}
+                >
                   A+
                   <span>Aumentar</span>
                 </button>
               </div>
 
               <div className="line-buttons">
-                <button type="button" onClick={decreaseLineHeight} aria-label="Diminuir altura de linha">
+                <button
+                  type="button"
+                  onClick={decreaseLineHeight}
+                  aria-label="Diminuir altura de linha"
+                  disabled={settings.lineHeight <= MIN_LINE_HEIGHT}
+                >
                   ↧
                   <span>Linhas</span>
                 </button>
@@ -280,7 +362,12 @@ export default function Accessibility() {
                   {settings.lineHeight.toFixed(1)}x
                 </div>
 
-                <button type="button" onClick={increaseLineHeight} aria-label="Aumentar altura de linha">
+                <button
+                  type="button"
+                  onClick={increaseLineHeight}
+                  aria-label="Aumentar altura de linha"
+                  disabled={settings.lineHeight >= MAX_LINE_HEIGHT}
+                >
                   ↥
                   <span>Linhas</span>
                 </button>

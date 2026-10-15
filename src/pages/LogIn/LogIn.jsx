@@ -5,6 +5,7 @@ import styles from "./LogIn.module.css";
 const CHAVE_USUARIO = "auraviva-usuario";
 const CHAVE_FUNCIONARIO = "auraviva-funcionario";
 const CHAVE_SESSAO = "auraviva-sessao";
+const CHAVE_CLIENTES = "auraviva-clientes";
 
 const LogIn = () => {
   const navigate = useNavigate();
@@ -34,7 +35,14 @@ const LogIn = () => {
         return;
       }
 
-      const usuario = { nome: dados.nome.trim(), email, senha: dados.senha, tipoPerfil: tipoAcesso };
+      const usuario = {
+        nome: dados.nome.trim(),
+        email,
+        senha: dados.senha,
+        tipoPerfil: tipoAcesso,
+        cadastroEm: new Date().toISOString(),
+        statusConta: "ativa",
+      };
       const usuarioSalvo = JSON.parse(localStorage.getItem(chaveConta) || "null");
 
       if (usuarioSalvo?.email === email) {
@@ -43,6 +51,13 @@ const LogIn = () => {
       }
 
       localStorage.setItem(chaveConta, JSON.stringify(usuario));
+      if (tipoAcesso === "cliente") {
+        const clientes = JSON.parse(localStorage.getItem(CHAVE_CLIENTES) || "[]");
+        localStorage.setItem(CHAVE_CLIENTES, JSON.stringify([
+          ...clientes.filter((cliente) => cliente.email !== email),
+          usuario,
+        ]));
+      }
       setMensagem(`Cadastro de ${tipoAcesso === "funcionario" ? "funcionário" : "cliente"} realizado! Agora você já pode entrar.`);
       setDados({ nome: "", email, senha: "", confirmarSenha: "" });
       setModoCadastro(false);
@@ -51,12 +66,22 @@ const LogIn = () => {
 
     const usuarioSalvo = JSON.parse(localStorage.getItem(chaveConta) || "null");
     if (usuarioSalvo?.email === email && usuarioSalvo.senha === dados.senha) {
-      const sessao = { ...usuarioSalvo, tipoPerfil: tipoAcesso };
+      if (usuarioSalvo.statusConta === "inativa") {
+        setMensagem("Esta conta está inativa. Entre em contato com um administrador.");
+        return;
+      }
+      const sessao = { ...usuarioSalvo, tipoPerfil: tipoAcesso, ultimoAcessoEm: new Date().toISOString() };
       localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessao));
       if (tipoAcesso === "cliente") {
         localStorage.setItem(CHAVE_USUARIO, JSON.stringify(sessao));
+        const clientes = JSON.parse(localStorage.getItem(CHAVE_CLIENTES) || "[]");
+        localStorage.setItem(CHAVE_CLIENTES, JSON.stringify([
+          ...clientes.filter((cliente) => cliente.email !== email),
+          sessao,
+        ]));
         navigate("/auraviva/perfil");
       } else {
+        localStorage.setItem(CHAVE_FUNCIONARIO, JSON.stringify(sessao));
         navigate("/auraviva/perfil-usuario");
       }
       return;

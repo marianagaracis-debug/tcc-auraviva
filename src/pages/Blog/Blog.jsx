@@ -1,6 +1,7 @@
 import { useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva"
+import mascoteGirassol from "../../assets/mascote-girassol.png"
 import styles from "./Blog.module.css"
 import { artigos, criarSlugArtigo } from "./artigos"
 
@@ -316,6 +317,11 @@ const Blog = () => {
           <span className={styles.kicker}>Você sabia?</span>
           <h2 id="curiosidades-titulo">Além da semente</h2>
           <p>Descubra fatos, avanços científicos e informações interessantes sobre sementes, agricultura e inovação no campo.</p>
+          <img
+            className={styles.resourceMascot}
+            src={mascoteGirassol}
+            alt="Mascote de girassol sorridente"
+          />
         </div>
 
         <div className={styles.faqContainer}>

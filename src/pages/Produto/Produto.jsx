@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva"
+import { obterProdutosAtivos } from "../../utils/gestaoLoja";
 import styles from "./Produto.module.css";
 
 export const produtos = [
@@ -67,6 +68,7 @@ const Produto = () => {
     const cardsRef = useRef(null);
     const mensagemBuscaRef = useRef(null);
     const termoBusca = (searchParams.get("q") || "").trim();
+    const produtosCatalogo = obterProdutosAtivos(produtos);
 
     useEffect(() => {
         const normalizar = (texto) => texto
@@ -145,13 +147,15 @@ const Produto = () => {
         const estacao = card.querySelector("[data-estacao]").textContent.trim();
 
         setProdutoSelecionado({
+            ...produtosCatalogo.find((produto) => produto.nome === nome),
             id: nome,
             nome,
             categoria,
             estacao,
             preco: card.querySelector(".preco").textContent.trim(),
             imagem: card.querySelector("img").src,
-            descricao: `As sementes de ${nome} são uma escolha de qualidade para o cultivo de ${categoria.toLowerCase()}. Com bom potencial de desenvolvimento e adaptação para o ${estacao.toLowerCase()}, elas ajudam a transformar cada plantio em uma nova possibilidade.`,
+            descricao: produtosCatalogo.find((produto) => produto.nome === nome)?.descricao
+                || `As sementes de ${nome} são uma escolha de qualidade para o cultivo de ${categoria.toLowerCase()}. Com bom potencial de desenvolvimento e adaptação para o ${estacao.toLowerCase()}, elas ajudam a transformar cada plantio em uma nova possibilidade.`,
         });
         setQuantidadeSelecionada(1);
     };
@@ -223,7 +227,7 @@ const Produto = () => {
                     <main className={styles.catalogResults}>
                         <p ref={mensagemBuscaRef} className={styles.emptyResults} role="status" hidden />
                         <div className="cards" ref={cardsRef} onClick={abrirDetalhes}>
-                    {produtos.map((produto, indice) => (
+                    {produtosCatalogo.map((produto, indice) => (
                         <div className="card" data-indice={indice} key={produto.nome}>
                             <img src={produto.imagem} alt={produto.alt} />
                             <div className="info">

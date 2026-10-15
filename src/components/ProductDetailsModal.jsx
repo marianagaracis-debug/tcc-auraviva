@@ -6,7 +6,8 @@ import { adicionarProdutoAoCarrinho } from "../utils/carrinho";
 const ProductDetailsModal = ({ produto, onClose, onAdded }) => {
   const navigate = useNavigate();
   const [quantidade, setQuantidade] = useState(1);
-  const descricao = `As sementes de ${produto.nome} são uma escolha de qualidade para o cultivo de ${produto.categoria.toLowerCase()}. Com bom potencial de desenvolvimento e adaptação para o ${produto.estacao.toLowerCase()}, elas ajudam a transformar cada plantio em uma nova possibilidade.`;
+  const descricao = produto.descricao
+    || `As sementes de ${produto.nome} são uma escolha de qualidade para o cultivo de ${produto.categoria.toLowerCase()}. Com bom potencial de desenvolvimento e adaptação para o ${produto.estacao.toLowerCase()}, elas ajudam a transformar cada plantio em uma nova possibilidade.`;
 
   const adicionar = () => {
     adicionarProdutoAoCarrinho(produto, quantidade);
