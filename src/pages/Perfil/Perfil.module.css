@@ -586,11 +586,39 @@
   white-space: nowrap;
 }
 
+.deliveryInfo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 16px 0;
+  margin: 0;
+  border-top: 1px solid #e5ebe4;
+}
+
+.deliveryInfo div {
+  min-width: 0;
+}
+
+.deliveryInfo dt {
+  margin-bottom: 5px;
+  color: #6c786f;
+  font-size: 0.78rem;
+}
+
+.deliveryInfo dd {
+  margin: 0;
+  color: #304638;
+  font-size: 0.88rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 700px) {
   .orderCard { padding: 16px; }
   .orderTimeline { gap: 4px; }
   .orderTimeline li { font-size: 0.63rem; }
   .deliveryControls { grid-template-columns: 1fr; }
+  .deliveryInfo { grid-template-columns: 1fr; }
 }
 
 .emptyState p {

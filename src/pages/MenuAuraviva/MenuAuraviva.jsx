@@ -1,9 +1,19 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import styles from "./MenuAuraviva.module.css"
 
+const obterDestinoPerfil = () => {
+try {
+    const sessao = JSON.parse(localStorage.getItem("auraviva-sessao") || "null")
+    return sessao?.tipoPerfil === "funcionario" ? "/auraviva/perfil-usuario" : "/auraviva/perfil"
+} catch {
+    return "/auraviva/perfil"
+}
+}
+
 const MenuAuraviva = () => {
 const navigate = useNavigate();
 const [searchParams] = useSearchParams();
+const destinoPerfil = obterDestinoPerfil();
 
 const pesquisar = (event) => {
     event.preventDefault();
@@ -71,7 +81,7 @@ return(
  <a className={styles.actionIcon} href="/auraviva/carrinho" aria-label="Carrinho">
  <span className="material-symbols-outlined">shopping_bag</span>
  </a>
- <Link className={styles.actionIcon} to="/auraviva/perfil" aria-label="Meu perfil">
+ <Link className={styles.actionIcon} to={destinoPerfil} aria-label="Meu perfil">
  <span className="material-symbols-outlined">account_circle</span>
  </Link>
  <Link className={styles.loginButton} to="/auraviva/login">Log in</Link>

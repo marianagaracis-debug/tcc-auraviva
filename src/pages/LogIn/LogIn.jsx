@@ -3,10 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import styles from "./LogIn.module.css";
 
 const CHAVE_USUARIO = "auraviva-usuario";
+const CHAVE_FUNCIONARIO = "auraviva-funcionario";
+const CHAVE_SESSAO = "auraviva-sessao";
 
 const LogIn = () => {
   const navigate = useNavigate();
   const [modoCadastro, setModoCadastro] = useState(false);
+  const [tipoAcesso, setTipoAcesso] = useState("cliente");
   const [dados, setDados] = useState({ nome: "", email: "", senha: "", confirmarSenha: "" });
   const [mensagem, setMensagem] = useState("");
 
@@ -23,6 +26,7 @@ const LogIn = () => {
   const enviarFormulario = (event) => {
     event.preventDefault();
     const email = dados.email.trim().toLowerCase();
+    const chaveConta = tipoAcesso === "funcionario" ? CHAVE_FUNCIONARIO : CHAVE_USUARIO;
 
     if (modoCadastro) {
       if (dados.senha !== dados.confirmarSenha) {
@@ -30,24 +34,31 @@ const LogIn = () => {
         return;
       }
 
-      const usuario = { nome: dados.nome.trim(), email, senha: dados.senha };
-      const usuarioSalvo = JSON.parse(localStorage.getItem(CHAVE_USUARIO) || "null");
+      const usuario = { nome: dados.nome.trim(), email, senha: dados.senha, tipoPerfil: tipoAcesso };
+      const usuarioSalvo = JSON.parse(localStorage.getItem(chaveConta) || "null");
 
       if (usuarioSalvo?.email === email) {
         setMensagem("Este e-mail já está cadastrado.");
         return;
       }
 
-      localStorage.setItem(CHAVE_USUARIO, JSON.stringify(usuario));
-      setMensagem("Cadastro realizado! Agora você já pode entrar.");
+      localStorage.setItem(chaveConta, JSON.stringify(usuario));
+      setMensagem(`Cadastro de ${tipoAcesso === "funcionario" ? "funcionário" : "cliente"} realizado! Agora você já pode entrar.`);
       setDados({ nome: "", email, senha: "", confirmarSenha: "" });
       setModoCadastro(false);
       return;
     }
 
-    const usuarioSalvo = JSON.parse(localStorage.getItem(CHAVE_USUARIO) || "null");
+    const usuarioSalvo = JSON.parse(localStorage.getItem(chaveConta) || "null");
     if (usuarioSalvo?.email === email && usuarioSalvo.senha === dados.senha) {
-      navigate("/auraviva/home");
+      const sessao = { ...usuarioSalvo, tipoPerfil: tipoAcesso };
+      localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessao));
+      if (tipoAcesso === "cliente") {
+        localStorage.setItem(CHAVE_USUARIO, JSON.stringify(sessao));
+        navigate("/auraviva/perfil");
+      } else {
+        navigate("/auraviva/perfil-usuario");
+      }
       return;
     }
 
@@ -74,6 +85,24 @@ const LogIn = () => {
         </div>
 
         <form className={styles.formulario} onSubmit={enviarFormulario}>
+          <div className={styles.accessTypes} role="group" aria-label="Tipo de acesso">
+            <button
+              type="button"
+              className={tipoAcesso === "cliente" ? styles.accessTypeActive : ""}
+              aria-pressed={tipoAcesso === "cliente"}
+              onClick={() => { setTipoAcesso("cliente"); setMensagem(""); }}
+            >
+              Cliente
+            </button>
+            <button
+              type="button"
+              className={tipoAcesso === "funcionario" ? styles.accessTypeActive : ""}
+              aria-pressed={tipoAcesso === "funcionario"}
+              onClick={() => { setTipoAcesso("funcionario"); setMensagem(""); }}
+            >
+              Funcionário
+            </button>
+          </div>
           {modoCadastro && (
             <label>
               Nome completo
@@ -105,14 +134,14 @@ const LogIn = () => {
           )}
 
           <button type="submit" className={styles.submitButton}>
-            {modoCadastro ? "Criar conta" : "Entrar"}
+            {modoCadastro ? `Criar conta de ${tipoAcesso === "funcionario" ? "funcionário" : "cliente"}` : "Entrar"}
           </button>
         </form>
 
         {mensagem && <p className={styles.mensagem} role="status">{mensagem}</p>}
 
         <p className={styles.switchText}>
-          {modoCadastro ? "Já possui uma conta?" : "Ainda não possui uma conta?"}{" "}
+          {modoCadastro ? "Já possui uma conta?" : `Ainda não possui uma conta de ${tipoAcesso === "funcionario" ? "funcionário" : "cliente"}?`}{" "}
           <button type="button" className={styles.switchButton} onClick={alternarModo}>
             {modoCadastro ? "Entrar" : "Cadastre-se"}
           </button>

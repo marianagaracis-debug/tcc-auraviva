@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
 import { artigos, criarSlugArtigo } from "../Blog/artigos";
+import AcompanhamentoPedidos from "./AcompanhamentoPedidos";
 import styles from "./Perfil.module.css";
 
 const CHAVE_USUARIO = "auraviva-usuario";
@@ -35,38 +36,6 @@ const obterAutorAtual = () => {
   return nome || "Você";
 };
 
-const etapasPedido = [
-  { id: "recebido", nome: "Pedido recebido" },
-  { id: "preparacao", nome: "Em preparação" },
-  { id: "enviado", nome: "Enviado" },
-  { id: "entrega", nome: "Saiu para entrega" },
-  { id: "entregue", nome: "Entregue" },
-  { id: "cancelado", nome: "Cancelado" },
-];
-
-const formatarData = (data) => new Date(data).toLocaleDateString("pt-BR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
-
-const converterPreco = (valor) => {
-  if (typeof valor === "number") return valor;
-  if (typeof valor !== "string") return Number.NaN;
-
-  const precoNormalizado = valor.replace(/[^\d,.-]/g, "");
-  return Number(precoNormalizado.includes(",")
-    ? precoNormalizado.replace(/\./g, "").replace(",", ".")
-    : precoNormalizado);
-};
-
-const formatarPreco = (valor) => {
-  const preco = converterPreco(valor);
-  return Number.isFinite(preco)
-    ? preco.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-    : "Valor indisponível";
-};
-
 const secoes = [
   { id: "perfil", nome: "Meu perfil", icone: "person" },
   { id: "pedidos", nome: "Meus pedidos", icone: "inventory_2" },
@@ -75,8 +44,6 @@ const secoes = [
   { id: "comentarios", nome: "Comentários no blog", icone: "chat_bubble" },
   { id: "curtidas", nome: "Curtidas no blog", icone: "favorite" },
   { id: "desejos", nome: "Minha lista de desejos", icone: "bookmark" },
-  { id: "eventos", nome: "Eventos", icone: "event" },
-  { id: "assinaturas", nome: "Assinaturas", icone: "autorenew" },
   { id: "conta", nome: "Minha conta", icone: "manage_accounts" },
   { id: "notificacoes", nome: "Notificações", icone: "notifications" },
   { id: "configuracoes", nome: "Configurações", icone: "settings" },
@@ -119,16 +86,6 @@ const estadosVazios = {
     descricao: "Salve produtos para encontrá-los facilmente quando quiser voltar a eles.",
     acao: "Encontrar sementes",
     destino: "/auraviva/produtos",
-  },
-  eventos: {
-    icone: "event",
-    titulo: "Nenhum evento disponível",
-    descricao: "Novos encontros e atividades da comunidade aparecerão aqui.",
-  },
-  assinaturas: {
-    icone: "autorenew",
-    titulo: "Você não tem assinaturas ativas",
-    descricao: "As assinaturas de produtos ou conteúdos ficarão disponíveis aqui quando esse serviço for lançado.",
   },
 };
 
@@ -189,7 +146,7 @@ const Perfil = () => {
   const [secaoAtiva, setSecaoAtiva] = useState(() => searchParams.get("secao") || "perfil");
   const [mensagem, setMensagem] = useState("");
   const [listaDeDesejos, setListaDeDesejos] = useState(() => lerLocalStorage(CHAVE_WISHLIST, []));
-  const [pedidos, setPedidos] = useState(() => lerLocalStorage(CHAVE_PEDIDOS, []));
+  const pedidos = lerLocalStorage(CHAVE_PEDIDOS, []);
   const [enderecos, setEnderecos] = useState(() => {
     const salvos = lerLocalStorage(CHAVE_ENDERECOS, []);
     return Array.isArray(salvos) ? salvos : [];
@@ -313,21 +270,6 @@ const Perfil = () => {
     const listaAtualizada = listaDeDesejos.filter((produto) => produto.id !== id);
     setListaDeDesejos(listaAtualizada);
     localStorage.setItem(CHAVE_WISHLIST, JSON.stringify(listaAtualizada));
-  };
-
-  const atualizarPedido = (id, alteracoes, registrarEtapa = false) => {
-    setPedidos((atuais) => {
-      const atualizados = atuais.map((pedido) => {
-        if (pedido.id !== id) return pedido;
-
-        const historico = registrarEtapa
-          ? [...pedido.historico, { status: alteracoes.status, data: new Date().toISOString() }]
-          : pedido.historico;
-        return { ...pedido, ...alteracoes, historico };
-      });
-      localStorage.setItem(CHAVE_PEDIDOS, JSON.stringify(atualizados));
-      return atualizados;
-    });
   };
 
   const renderizarConteudo = () => {
@@ -487,87 +429,7 @@ const Perfil = () => {
     }
 
     if (secaoAtiva === "pedidos" && pedidos.length > 0) {
-      return (
-        <div className={styles.orders}>
-          <p className={styles.localDataNote}>Os dados ficam salvos apenas neste navegador e não são sincronizados entre dispositivos.</p>
-          {pedidos.map((pedido) => {
-            const etapaAtual = etapasPedido.findIndex((etapa) => etapa.id === pedido.status);
-            const statusAtual = etapasPedido.find((etapa) => etapa.id === pedido.status)?.nome || "Pedido recebido";
-            const totalPedido = Number.isFinite(pedido.subtotal)
-              ? pedido.subtotal
-              : pedido.itens.reduce((total, item) => total + converterPreco(item.preco) * item.quantidade, 0);
-
-            return (
-              <article className={styles.orderCard} key={pedido.id}>
-                <header className={styles.orderHeader}>
-                  <div>
-                    <span className={styles.orderKicker}>Pedido {pedido.id}</span>
-                    <h3>{formatarData(pedido.criadoEm)}</h3>
-                  </div>
-                  <span className={styles.orderStatus}>{statusAtual}</span>
-                </header>
-
-                <ol className={styles.orderTimeline} aria-label={`Etapas do pedido ${pedido.id}`}>
-                  {etapasPedido.slice(0, 5).map((etapa, indice) => (
-                    <li className={indice <= etapaAtual && pedido.status !== "cancelado" ? styles.completedStep : ""} key={etapa.id}>
-                      <span aria-hidden="true" />
-                      {etapa.nome}
-                    </li>
-                  ))}
-                </ol>
-                {pedido.status === "cancelado" && <p className={styles.cancelledNote}>Este pedido foi cancelado.</p>}
-
-                <div className={styles.orderItems}>
-                  {pedido.itens.map((item) => (
-                    <div key={item.id}>
-                      <span>{item.quantidade} × {item.nome}</span>
-                      <strong>{formatarPreco(converterPreco(item.preco) * item.quantidade)}</strong>
-                    </div>
-                  ))}
-                  <div className={styles.orderTotal}><span>Total</span><strong>{formatarPreco(totalPedido)}</strong></div>
-                </div>
-
-                <div className={styles.deliveryControls}>
-                  <label>
-                    Etapa do pedido
-                    <select value={pedido.status} onChange={(event) => atualizarPedido(pedido.id, { status: event.target.value }, true)}>
-                      {etapasPedido.map((etapa) => <option value={etapa.id} key={etapa.id}>{etapa.nome}</option>)}
-                    </select>
-                  </label>
-                  <label>
-                    Código de rastreio
-                    <input
-                      value={pedido.codigoRastreio}
-                      onChange={(event) => atualizarPedido(pedido.id, { codigoRastreio: event.target.value })}
-                      placeholder="Informe ao despachar"
-                    />
-                  </label>
-                  <label>
-                    Previsão de entrega
-                    <input
-                      type="date"
-                      value={pedido.previsaoEntrega}
-                      onChange={(event) => atualizarPedido(pedido.id, { previsaoEntrega: event.target.value })}
-                    />
-                  </label>
-                </div>
-
-                <div className={styles.orderHistory}>
-                  <h4>Histórico de atualizações</h4>
-                  <ul>
-                    {[...pedido.historico].reverse().map((evento, indice) => (
-                      <li key={`${evento.data}-${indice}`}>
-                        <strong>{etapasPedido.find((etapa) => etapa.id === evento.status)?.nome || evento.status}</strong>
-                        <time dateTime={evento.data}>{formatarData(evento.data)}</time>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      );
+      return <AcompanhamentoPedidos pedidos={pedidos} />;
     }
 
     if (secaoAtiva === "comentarios" && comentariosBlog.length > 0) {

@@ -2,6 +2,7 @@ import{
     BrowserRouter,
     Routes,
     Route,
+    Navigate,
     useLocation
 }from "react-router-dom"
 
@@ -14,6 +15,7 @@ import Carrinho from "../pages/Carrinho/Carrinho"
 import SementesDeInverno from "../pages/SementesDeInverno/SementesDeInverno"
 import SementesDeVerao from "../pages/SementesDeVerao/SementesDeVerao"
 import Perfil from "../pages/Perfil/Perfil"
+import PerfilUsuario from "../pages/Perfil/PerfilUsuario"
 import Intro from "../pages/Intro/Intro"
 import AccessibilityWidget from "../components/AccessibilityWidget"
 
@@ -21,6 +23,21 @@ const IntroOnEntry = () => {
     const { pathname } = useLocation()
 
     return pathname === "/" ? <Intro /> : null
+}
+
+const lerSessao = () => {
+    try {
+        return JSON.parse(localStorage.getItem("auraviva-sessao") || "null")
+    } catch {
+        return null
+    }
+}
+
+const RotaPorPerfil = ({ tipoPerfil, children }) => {
+    const sessao = lerSessao()
+    return sessao?.tipoPerfil === tipoPerfil
+        ? children
+        : <Navigate to="/auraviva/login" replace />
 }
 
 const AppRoutes = () => {
@@ -67,7 +84,12 @@ const AppRoutes = () => {
 
     <Route
     path="/auraviva/perfil"
-    element={<Perfil/>}
+    element={<RotaPorPerfil tipoPerfil="cliente"><Perfil/></RotaPorPerfil>}
+    />
+
+    <Route
+    path="/auraviva/perfil-usuario"
+    element={<RotaPorPerfil tipoPerfil="funcionario"><PerfilUsuario/></RotaPorPerfil>}
     />
 
     <Route

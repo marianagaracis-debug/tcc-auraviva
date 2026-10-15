@@ -77,6 +77,33 @@
   text-align: left;
 }
 
+.accessTypes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 4px;
+  border: 1px solid #c9d9ce;
+  border-radius: 7px;
+  background: #f4f8f4;
+}
+
+.accessTypes button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #496456;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.accessTypes .accessTypeActive {
+  background: #fff;
+  color: #176044;
+  box-shadow: 0 1px 4px rgba(31, 77, 56, 0.14);
+}
+
 .formulario label {
   display: grid;
   gap: 7px;
