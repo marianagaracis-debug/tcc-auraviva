@@ -1,11 +1,11 @@
 const CHAVE_CARRINHO = "auraviva-carrinho";
 
 export const adicionarProdutoAoCarrinho = (produto, quantidade) => {
-  const preco = Number(
-    produto.preco.replace("R$", "").replace(/\./g, "").replace(",", ".").trim()
-  );
+  const preco = typeof produto.preco === "number"
+    ? produto.preco
+    : Number(produto.preco.replace("R$", "").replace(/\./g, "").replace(",", ".").trim());
   const item = {
-    id: produto.nome,
+    id: produto.id ?? produto.nome,
     nome: produto.nome,
     categoria: produto.categoria,
     preco,

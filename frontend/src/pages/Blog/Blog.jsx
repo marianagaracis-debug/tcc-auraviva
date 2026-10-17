@@ -1,9 +1,10 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom"
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva"
 import mascoteGirassol from "../../assets/mascote-girassol.png"
 import styles from "./Blog.module.css"
 import { artigos, criarSlugArtigo } from "./artigos"
+import { apiRequest } from "../../utils/gestaoLoja";
 
 const CHAVE_USUARIO = "auraviva-usuario";
 
@@ -126,6 +127,22 @@ const Blog = () => {
   const [feedbackArtigos, setFeedbackArtigos] = useState(() => lerFeedbackArtigos());
   const [comentariosAbertos, setComentariosAbertos] = useState({});
   const [novoComentario, setNovoComentario] = useState({});
+  const [artigosApi, setArtigosApi] = useState([]);
+  const [erroApi, setErroApi] = useState("");
+  const [carregandoArtigos, setCarregandoArtigos] = useState(true);
+
+  useEffect(() => {
+    apiRequest("/blogs/all")
+      .then((dados) => setArtigosApi(dados.map((artigo) => ({
+        ...artigo,
+        subtitulo: artigo.resumo,
+        categoria: artigo.autor || "Cultivo",
+        imagem: artigo.imagemUrl || "",
+        texto: artigo.conteudo,
+      }))))
+      .catch((error) => setErroApi(error.message))
+      .finally(() => setCarregandoArtigos(false));
+  }, []);
 
   const updateArticleControls = () => {
     const track = articleTrackRef.current;
@@ -387,7 +404,9 @@ const Blog = () => {
           aria-label="Carrossel de artigos em destaque"
           tabIndex={0}
         >
-          {artigos.map((artigo) => {
+          {erroApi && <p role="alert">{erroApi}</p>}
+          {carregandoArtigos && <p role="status">Carregando artigos...</p>}
+          {artigosApi.map((artigo) => {
             const slug = criarSlugArtigo(artigo.titulo);
             const feedbackArtigo = feedbackArtigos[slug] ?? { liked: false, likes: 0, comments: [] };
 
@@ -465,6 +484,7 @@ const Blog = () => {
               </article>
             );
           })}
+          {!carregandoArtigos && !erroApi && artigosApi.length === 0 && <p>Nenhum artigo publicado no momento.</p>}
 
         </div>
       </section>

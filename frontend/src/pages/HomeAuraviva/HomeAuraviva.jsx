@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
+import { apiRequest } from "../../utils/gestaoLoja";
 import styles from "./HomeAuraviva.module.css";
 
 const perguntas = [
@@ -16,6 +17,40 @@ const perguntas = [
 
 const HomeAuraviva = () => {
   const [faqAberto, setFaqAberto] = useState(null);
+  const [mensagemContato, setMensagemContato] = useState("");
+  const [mensagemNewsletter, setMensagemNewsletter] = useState("");
+
+  const enviarContato = async (event) => {
+    event.preventDefault();
+    const formulario = new FormData(event.currentTarget);
+    try {
+      await apiRequest("/mensagens/enviar", {
+        method: "POST",
+        body: JSON.stringify({
+          emissor: String(formulario.get("nome")).trim(),
+          email: String(formulario.get("email")).trim(),
+          telefone: String(formulario.get("telefone")).trim(),
+          texto: String(formulario.get("mensagem")).trim(),
+        }),
+      });
+      event.currentTarget.reset();
+      setMensagemContato("Mensagem enviada. Nossa equipe entrará em contato.");
+    } catch (error) {
+      setMensagemContato(error.message);
+    }
+  };
+
+  const inscreverNewsletter = async (event) => {
+    event.preventDefault();
+    const email = new FormData(event.currentTarget).get("email");
+    try {
+      const resposta = await apiRequest(`/newsletter/inscrever?email=${encodeURIComponent(email)}`, { method: "POST" });
+      setMensagemNewsletter(resposta.mensagem);
+      event.currentTarget.reset();
+    } catch (error) {
+      setMensagemNewsletter(error.message);
+    }
+  };
 
   return (
     <div className={styles.page}>
@@ -102,15 +137,16 @@ const HomeAuraviva = () => {
           <h2>FALE CONOSCO</h2>
           <p>Tem alguma dúvida ou deseja fazer um pedido? Entre em contato conosco.</p>
 
-          <form className={styles.formulario} onSubmit={(event) => event.preventDefault()}>
+          <form className={styles.formulario} onSubmit={enviarContato}>
             <div className={styles.linha}>
-              <input type="text" placeholder="Nome" required />
-              <input type="email" placeholder="E-mail" required />
+              <input name="nome" type="text" placeholder="Nome" maxLength={100} required />
+              <input name="email" type="email" placeholder="E-mail" maxLength={254} required />
             </div>
-            <input type="tel" placeholder="Telefone" required />
-            <textarea rows="5" placeholder="Mensagem" />
+            <input name="telefone" type="tel" placeholder="Telefone" maxLength={20} />
+            <textarea name="mensagem" rows="5" placeholder="Mensagem" maxLength={400} required />
             <button type="submit">Enviar</button>
           </form>
+          {mensagemContato && <p role="status">{mensagemContato}</p>}
         </div>
       </section>
 
@@ -162,10 +198,11 @@ const HomeAuraviva = () => {
             <span className={`material-symbols-outlined ${styles.subscribeIcon}`}>send</span>
             <h3>Inscreva-se</h3>
             <br/>
-            <form onSubmit={(event) => event.preventDefault()}>
-              <input type="email" placeholder="Digite seu e-mail" aria-label="Digite seu e-mail" required />
+            <form onSubmit={inscreverNewsletter}>
+              <input name="email" type="email" placeholder="Digite seu e-mail" aria-label="Digite seu e-mail" required />
               <button type="submit">Inscreva-se agora</button>
             </form>
+            {mensagemNewsletter && <p role="status">{mensagemNewsletter}</p>}
           </div>
 
           <div className={styles.paymentInfo}>

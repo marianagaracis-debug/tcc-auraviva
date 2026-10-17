@@ -1,18 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
 import AcompanhamentoPedidos from "./AcompanhamentoPedidos";
-import { produtos as catalogoBase } from "../Produto/Produto";
 import {
   CHAVE_ATIVIDADES,
-  CHAVE_PRODUTOS,
+  apiRequest,
+  converterProdutoApi,
   lerDadosLocais,
-  obterProdutosGerenciaveis,
   registrarAtividade,
 } from "../../utils/gestaoLoja";
 import styles from "./Perfil.module.css";
 
-const CHAVE_PEDIDOS = "auraviva-pedidos";
 const CHAVE_FOTO_FUNCIONARIO = "auraviva-foto-funcionario";
 const ESTOQUE_BAIXO = 5;
 
@@ -39,7 +37,29 @@ const formatarPreco = (valor) => {
   return valor || "";
 };
 
-const identificarProduto = (produto) => produto.id || produto.nome;
+const converterPedidoApi = (pedido) => ({
+  id: pedido.id,
+  criadoEm: pedido.dataVenda,
+  status: ({
+    PENDENTE: "recebido",
+    PAGO: "preparacao",
+    ENVIADO: "enviado",
+    CONCLUIDO: "entregue",
+    CANCELADO: "cancelado",
+  })[pedido.statusVenda] || "recebido",
+  subtotal: Number(pedido.valorTotal),
+  codigoRastreio: pedido.codigoRastreio || "",
+  previsaoEntrega: pedido.previsaoEntrega || "",
+  enderecoEntrega: pedido.enderecoEntrega ? { logradouro: pedido.enderecoEntrega } : null,
+  cliente: pedido.cliente,
+  itens: pedido.itens.map((item) => ({
+    id: item.idProduto,
+    nome: item.nome,
+    imagem: item.imagemUrl,
+    quantidade: item.quantidade,
+    preco: Number(item.precoUnitario),
+  })),
+});
 
 const converterPreco = (valor) => {
   if (typeof valor === "number") return valor;
@@ -72,28 +92,59 @@ const PerfilUsuario = () => {
   const [foto, setFoto] = useState(() => localStorage.getItem(CHAVE_FOTO_FUNCIONARIO) || "");
   const [secaoAtiva, setSecaoAtiva] = useState("visao-geral");
   const [mensagem, setMensagem] = useState("");
-  const [pedidos, setPedidos] = useState(() => {
-    const salvos = lerDadosLocais(CHAVE_PEDIDOS, []);
-    return Array.isArray(salvos) ? salvos : [];
-  });
-  const [produtos, setProdutos] = useState(() => obterProdutosGerenciaveis(catalogoBase));
+  const [pedidos, setPedidos] = useState([]);
+  const [produtos, setProdutos] = useState([]);
   const [produtoEdicao, setProdutoEdicao] = useState(null);
   const [pesquisaPedidos, setPesquisaPedidos] = useState("");
   const [pesquisaClientes, setPesquisaClientes] = useState("");
-  const [clientes, setClientes] = useState(() => {
-    const salvos = lerDadosLocais("auraviva-clientes", []);
-    const lista = Array.isArray(salvos) ? salvos : [];
-    const legado = lerDadosLocais("auraviva-usuario", null);
-    return legado && !lista.some((cliente) => cliente.email === legado.email)
-      ? [...lista, legado]
-      : lista;
-  });
+  const [clientes, setClientes] = useState([]);
   const [movimento, setMovimento] = useState({ produtoId: "", tipo: "entrada", quantidade: "", lote: "" });
   const [senha, setSenha] = useState({ atual: "", nova: "", confirmacao: "" });
   const [atividades, setAtividades] = useState(() => {
     const salvas = lerDadosLocais(CHAVE_ATIVIDADES, []);
     return Array.isArray(salvas) ? salvas : [];
   });
+
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        const perfil = await apiRequest("/usuarios/me");
+        const sessao = {
+          ...perfil,
+          email: perfil.username,
+          tipoPerfil: "funcionario",
+        };
+        setFuncionario(sessao);
+        localStorage.setItem("auraviva-sessao", JSON.stringify(sessao));
+      } catch (error) {
+        setMensagem(error.message);
+        if (error.message.includes("401")) navigate("/auraviva/login", { replace: true });
+        return;
+      }
+
+      const [pedidosResult, produtosResult, clientesResult] = await Promise.allSettled([
+        apiRequest("/vendas/pedidos/todos"),
+        apiRequest("/produtos/all"),
+        apiRequest("/usuarios/all"),
+      ]);
+      if (pedidosResult.status === "fulfilled") {
+        setPedidos(pedidosResult.value.map(converterPedidoApi));
+      } else setMensagem(pedidosResult.reason.message);
+      if (produtosResult.status === "fulfilled") {
+        setProdutos(produtosResult.value.map(converterProdutoApi).map((produto) => ({
+          ...produto,
+          estoque: produto.quantidadeEstoque,
+        })));
+      } else setMensagem(produtosResult.reason.message);
+      if (clientesResult.status === "fulfilled") {
+        setClientes(clientesResult.value.filter((cliente) => cliente.nivelAcesso === "USER").map((cliente) => ({
+          ...cliente,
+          email: cliente.username,
+        })));
+      } else setMensagem(clientesResult.reason.message);
+    };
+    carregarDados();
+  }, [navigate]);
 
   const secao = secoes.find((item) => item.id === secaoAtiva);
   const produtosAtivos = useMemo(() => produtos.filter((produto) => produto.ativo !== false), [produtos]);
@@ -127,12 +178,7 @@ const PerfilUsuario = () => {
     .join("")
     .toUpperCase();
 
-  const salvarPedidos = (atualizados) => {
-    localStorage.setItem(CHAVE_PEDIDOS, JSON.stringify(atualizados));
-    setPedidos(atualizados);
-  };
-
-  const atualizarPedido = (id, alteracoes, registrarEtapa = false) => {
+  const atualizarPedido = async (id, alteracoes, registrarEtapa = false) => {
     const atualizados = pedidos.map((pedido) => {
       if (pedido.id !== id) return pedido;
       const historicoAtual = Array.isArray(pedido.historico) ? pedido.historico : [];
@@ -141,15 +187,39 @@ const PerfilUsuario = () => {
         : historicoAtual;
       return { ...pedido, ...alteracoes, historico };
     });
-    salvarPedidos(atualizados);
-    if (registrarEtapa) {
-      const atualizado = atualizados.find((pedido) => pedido.id === id);
-      registrarAtividade(`Pedido ${id} atualizado para ${atualizado.status}.`);
-      setAtividades(lerDadosLocais(CHAVE_ATIVIDADES, []));
+    setPedidos(atualizados);
+    try {
+      if (registrarEtapa && alteracoes.status) {
+        const statusVenda = ({
+          recebido: "PENDENTE",
+          preparacao: "PAGO",
+          enviado: "ENVIADO",
+          entrega: "ENVIADO",
+          entregue: "CONCLUIDO",
+          cancelado: "CANCELADO",
+        })[alteracoes.status];
+        await apiRequest(`/vendas/${id}/status?statusVenda=${encodeURIComponent(statusVenda)}`, { method: "PUT" });
+        registrarAtividade(`Pedido ${id} atualizado para ${alteracoes.status}.`);
+        setAtividades(lerDadosLocais(CHAVE_ATIVIDADES, []));
+      }
+      if ("codigoRastreio" in alteracoes || "previsaoEntrega" in alteracoes) {
+        const parametros = new URLSearchParams();
+        if ("codigoRastreio" in alteracoes) parametros.set("codigoRastreio", alteracoes.codigoRastreio || "");
+        if ("previsaoEntrega" in alteracoes) parametros.set("previsaoEntrega", alteracoes.previsaoEntrega || "");
+        await apiRequest(`/vendas/${id}/rastreio?${parametros}`, { method: "PUT" });
+      }
+    } catch (error) {
+      setMensagem(error.message);
+      try {
+        const atualizadosNoServidor = await apiRequest("/vendas/pedidos/todos");
+        setPedidos(atualizadosNoServidor.map(converterPedidoApi));
+      } catch (erroAtualizacao) {
+        setMensagem(`${error.message} Não foi possível atualizar os pedidos na tela: ${erroAtualizacao.message}`);
+      }
     }
   };
 
-  const salvarPerfil = (event) => {
+  const salvarPerfil = async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const alteracoes = {
@@ -159,16 +229,19 @@ const PerfilUsuario = () => {
       departamento: String(form.get("departamento") || "").trim(),
       matricula: String(form.get("matricula") || "").trim(),
     };
-    const atualizado = { ...funcionario, ...alteracoes };
     try {
+      const perfil = await apiRequest("/usuarios/me", {
+        method: "PUT",
+        body: JSON.stringify({ nome: alteracoes.nome }),
+      });
+      const atualizado = { ...funcionario, ...perfil, email: perfil.username };
       localStorage.setItem("auraviva-sessao", JSON.stringify(atualizado));
-      localStorage.setItem("auraviva-funcionario", JSON.stringify(atualizado));
       setFuncionario(atualizado);
       registrarAtividade("Dados profissionais atualizados.");
       setAtividades(lerDadosLocais(CHAVE_ATIVIDADES, []));
-      setMensagem("Seus dados permitidos foram atualizados.");
-    } catch {
-      setMensagem("Não foi possível salvar os dados neste navegador.");
+      setMensagem("Seu nome foi atualizado. Os demais dados profissionais não são editáveis pela API.");
+    } catch (error) {
+      setMensagem(error.message);
     }
   };
 
@@ -212,61 +285,61 @@ const PerfilUsuario = () => {
     event.target.value = "";
   };
 
-  const salvarProduto = (event) => {
+  const salvarProduto = async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const nome = String(form.get("nome") || "").trim();
-    const id = produtoEdicao
-      ? (produtoEdicao.id || produtoEdicao.nome)
-      : `produto-${Date.now()}`;
     const produto = {
       ...(produtoEdicao || {}),
-      id,
       nome,
-      alt: nome,
-      imagem: String(form.get("imagem") || "").trim(),
-      categoriaId: String(form.get("categoriaId")),
-      categoria: categoriasProduto[String(form.get("categoriaId"))] || "Outros cultivos",
-      estacaoId: String(form.get("estacaoId")),
-      estacao: String(form.get("estacaoId")) === "inverno" ? "Inverno" : "Verão",
-      preco: formatarPreco(converterPreco(form.get("preco"))),
       descricao: String(form.get("descricao") || "").trim(),
-      estoque: Number(form.get("estoque")),
-      lote: String(form.get("lote") || "").trim(),
-      ativo: produtoEdicao?.ativo !== false,
+      tipoSemente: categoriasProduto[String(form.get("categoriaId"))] || "Outros cultivos",
+      estacao: String(form.get("estacaoId")).toUpperCase(),
+      preco: converterPreco(form.get("preco")),
+      quantidadeEstoque: Number(form.get("estoque")),
+      imagemUrl: String(form.get("imagem") || "").trim(),
+      transgenico: produtoEdicao?.transgenico ?? true,
+      destaque: produtoEdicao?.destaque ?? false,
     };
-    const atualizados = produtoEdicao
-      ? produtos.map((item) => identificarProduto(item) === identificarProduto(produtoEdicao) ? produto : item)
-      : [...produtos, produto];
     try {
-      localStorage.setItem(CHAVE_PRODUTOS, JSON.stringify(atualizados));
+      const formData = new FormData();
+      formData.append("produto", new Blob([JSON.stringify(produto)], { type: "application/json" }));
+      const salvo = await apiRequest(
+        produtoEdicao ? `/produtos/${produtoEdicao.id}` : "/produtos",
+        { method: produtoEdicao ? "PUT" : "POST", body: formData },
+      );
+      const produtoAtualizado = {
+        ...converterProdutoApi(salvo),
+        estoque: salvo.quantidadeEstoque,
+      };
+      setProdutos((atuais) => produtoEdicao
+        ? atuais.map((item) => item.id === produtoEdicao.id ? produtoAtualizado : item)
+        : [...atuais, produtoAtualizado]);
       registrarAtividade(`${produtoEdicao ? "Produto editado" : "Produto cadastrado"}: ${nome}.`);
-      setProdutos(atualizados);
       setAtividades(lerDadosLocais(CHAVE_ATIVIDADES, []));
       setProdutoEdicao(null);
       setMensagem("Produto salvo com sucesso.");
-    } catch {
-      setMensagem("Não foi possível salvar o produto neste navegador.");
+    } catch (error) {
+      setMensagem(error.message);
     }
   };
 
-  const alternarProduto = (produto) => {
-    const atualizado = { ...produto, ativo: produto.ativo === false };
-    const atualizados = produtos.map((item) =>
-      identificarProduto(item) === identificarProduto(produto) ? atualizado : item,
-    );
+  const alternarProduto = async (produto) => {
+    const ativo = produto.ativo === false;
     try {
-      localStorage.setItem(CHAVE_PRODUTOS, JSON.stringify(atualizados));
-      registrarAtividade(`Produto ${atualizado.ativo ? "ativado" : "desativado"}: ${produto.nome}.`);
-      setProdutos(atualizados);
+      const atualizado = await apiRequest(`/produtos/${produto.id}/${ativo ? "ativar" : "inativar"}`, { method: "PUT" });
+      setProdutos((atuais) => atuais.map((item) => item.id === produto.id
+        ? { ...converterProdutoApi(atualizado), estoque: atualizado.quantidadeEstoque }
+        : item));
+      registrarAtividade(`Produto ${ativo ? "ativado" : "desativado"}: ${produto.nome}.`);
       setAtividades(lerDadosLocais(CHAVE_ATIVIDADES, []));
-      setMensagem(`Produto ${atualizado.ativo ? "ativado" : "desativado"}.`);
-    } catch {
-      setMensagem("Não foi possível atualizar o produto neste navegador.");
+      setMensagem(`Produto ${ativo ? "ativado" : "desativado"}.`);
+    } catch (error) {
+      setMensagem(error.message);
     }
   };
 
-  const registrarMovimento = (event) => {
+  const registrarMovimento = async (event) => {
     event.preventDefault();
     const quantidade = Number(movimento.quantidade);
     const produto = produtos.find((item) => item.id === movimento.produtoId || item.nome === movimento.produtoId);
@@ -285,7 +358,6 @@ const PerfilUsuario = () => {
       estoque: novoSaldo,
       lote: movimento.lote.trim() || produto.lote || "",
     };
-    const atualizados = produtos.map((item) => identificarProduto(item) === identificarProduto(produto) ? atualizado : item);
     const movimentosSalvos = lerDadosLocais("auraviva-movimentos-estoque", []);
     const movimentos = Array.isArray(movimentosSalvos) ? movimentosSalvos : [];
     const registro = {
@@ -299,15 +371,33 @@ const PerfilUsuario = () => {
       data: new Date().toISOString(),
     };
     try {
-      localStorage.setItem(CHAVE_PRODUTOS, JSON.stringify(atualizados));
+      const dadosProduto = {
+        nome: produto.nome,
+        descricao: produto.descricao,
+        tipoSemente: produto.tipoSemente,
+        estacao: produto.estacaoId.toUpperCase(),
+        transgenico: produto.transgenico,
+        preco: converterPreco(produto.preco),
+        quantidadeEstoque: novoSaldo,
+        destaque: produto.destaque,
+        imagemUrl: produto.imagemUrl,
+      };
+      const formData = new FormData();
+      formData.append("produto", new Blob([JSON.stringify(dadosProduto)], { type: "application/json" }));
+      const salvo = await apiRequest(`/produtos/${produto.id}`, {
+        method: "PUT",
+        body: formData,
+      });
       localStorage.setItem("auraviva-movimentos-estoque", JSON.stringify([registro, ...movimentos]));
       registrarAtividade(`Estoque de ${produto.nome}: ${movimento.tipo} de ${quantidade} unidade(s).`);
-      setProdutos(atualizados);
+      setProdutos((atuais) => atuais.map((item) => item.id === produto.id
+        ? { ...converterProdutoApi(salvo), estoque: salvo.quantidadeEstoque }
+        : item));
       setAtividades(lerDadosLocais(CHAVE_ATIVIDADES, []));
       setMovimento({ ...movimento, quantidade: "", lote: "" });
       setMensagem("Movimentação de estoque registrada.");
-    } catch {
-      setMensagem("Não foi possível salvar a movimentação neste navegador.");
+    } catch (error) {
+      setMensagem(error.message);
     }
   };
 
@@ -330,38 +420,39 @@ const PerfilUsuario = () => {
     }
   };
 
-  const alterarSenha = (event) => {
+  const alterarSenha = async (event) => {
     event.preventDefault();
-    if (senha.atual !== funcionario.senha) {
-      setMensagem("A senha atual não confere.");
-      return;
-    }
-    if (senha.nova.length < 6) {
-      setMensagem("A nova senha deve ter pelo menos 6 caracteres.");
+    if (senha.nova.length < 8) {
+      setMensagem("A nova senha deve ter pelo menos 8 caracteres.");
       return;
     }
     if (senha.nova !== senha.confirmacao) {
       setMensagem("A confirmação da nova senha não confere.");
       return;
     }
-    const atualizado = { ...funcionario, senha: senha.nova };
     try {
-      localStorage.setItem("auraviva-funcionario", JSON.stringify(atualizado));
-      localStorage.setItem("auraviva-sessao", JSON.stringify(atualizado));
-      setFuncionario(atualizado);
+      await apiRequest("/usuarios/me/alterar-senha", {
+        method: "PUT",
+        body: JSON.stringify({ senhaAtual: senha.atual, novaSenha: senha.nova }),
+      });
       setSenha({ atual: "", nova: "", confirmacao: "" });
       registrarAtividade("Senha da conta atualizada.");
       setAtividades(lerDadosLocais(CHAVE_ATIVIDADES, []));
-      setMensagem("Senha alterada. Como este protótipo usa armazenamento local, ela só é válida neste navegador.");
-    } catch {
-      setMensagem("Não foi possível atualizar a senha neste navegador.");
+      setMensagem("Senha alterada com sucesso.");
+    } catch (error) {
+      setMensagem(error.message);
     }
   };
 
   const selecionarSecao = (id) => {
     if (id === "sair") {
-      localStorage.removeItem("auraviva-sessao");
-      navigate("/auraviva/login", { replace: true });
+      apiRequest("/logout", { method: "POST" })
+        .then(() => {
+          localStorage.removeItem("auraviva-sessao");
+          localStorage.removeItem("auraviva-usuario");
+          navigate("/auraviva/login", { replace: true });
+        })
+        .catch((error) => setMensagem(error.message));
       return;
     }
     setMensagem("");
@@ -434,7 +525,7 @@ const PerfilUsuario = () => {
               <label>Cargo<input name="cargo" defaultValue={funcionario.cargo || ""} placeholder="Ex.: Analista de operações" /></label>
               <label>Departamento<input name="departamento" defaultValue={funcionario.departamento || ""} placeholder="Ex.: Logística" /></label>
               <label>Matrícula ou identificador<input name="matricula" defaultValue={funcionario.matricula || ""} /></label>
-              <label>Data de cadastro<input value={formatarData(funcionario.cadastroEm)} readOnly /></label>
+              <label>Data de cadastro<input value={formatarData(funcionario.dataCadastro)} readOnly /></label>
               <label>Status da conta<input value={funcionario.statusConta === "inativa" ? "Inativa" : "Ativa"} readOnly /></label>
             </div>
             <p className={styles.localDataNote}>Cargo, departamento e matrícula são informações opcionais. O status é controlado por administrador autorizado.</p>

@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
-import { artigos, criarSlugArtigo } from "../Blog/artigos";
+import { criarSlugArtigo } from "../Blog/artigos";
+import { apiRequest } from "../../utils/gestaoLoja";
 import styles from "./Artigo.module.css";
 
 const Artigo = () => {
   const { slug } = useParams();
-  const artigo = artigos.find((item) => criarSlugArtigo(item.titulo) === slug);
+  const [artigos, setArtigos] = useState([]);
+  const [erroApi, setErroApi] = useState("");
+  const [carregando, setCarregando] = useState(true);
   const [curtido, setCurtido] = useState(false);
   const [curtidas, setCurtidas] = useState(42);
   const [comentarios, setComentarios] = useState([
@@ -15,6 +18,25 @@ const Artigo = () => {
   ]);
   const [novoComentario, setNovoComentario] = useState("");
 
+  useEffect(() => {
+    apiRequest("/blogs/all")
+      .then((dados) => setArtigos(dados.map((item) => ({
+        ...item,
+        categoria: item.autor || "Cultivo",
+        imagem: item.imagemUrl || "",
+        subtitulo: item.resumo,
+        texto: item.conteudo,
+      }))))
+      .catch((error) => setErroApi(error.message))
+      .finally(() => setCarregando(false));
+  }, []);
+
+  const artigo = artigos.find((item) => criarSlugArtigo(item.titulo) === slug);
+
+  if (carregando) {
+    return <main className={styles.notFound} role="status">Carregando artigo...</main>;
+  }
+
   if (!artigo) {
     return (
       <div className={styles.page}>
@@ -22,7 +44,7 @@ const Artigo = () => {
         <main className={styles.notFound}>
           <span className={styles.category}>Artigo</span>
           <h1>Artigo não encontrado</h1>
-          <p>Não encontramos esse conteúdo. Volte ao blog para escolher outro artigo.</p>
+          <p>{erroApi || "Não encontramos esse conteúdo. Volte ao blog para escolher outro artigo."}</p>
           <Link to="/auraviva/blog" className={styles.backLink}>Voltar ao blog</Link>
         </main>
       </div>
@@ -82,7 +104,7 @@ const Artigo = () => {
 
           <div className={styles.body}>
             <h2>{artigo.conteudo ? "Artigo completo" : "Sobre este assunto"}</h2>
-            {artigo.conteudo ? (
+            {Array.isArray(artigo.conteudo) ? (
               artigo.conteudo.map((secao, indice) => (
                 <section className={styles.contentSection} key={secao.titulo || indice}>
                   {secao.titulo && <h3>{secao.titulo}</h3>}
@@ -95,7 +117,7 @@ const Artigo = () => {
                 </section>
               ))
             ) : (
-              <p>{artigo.texto}</p>
+              <p>{artigo.conteudo || artigo.texto}</p>
             )}
           </div>
 

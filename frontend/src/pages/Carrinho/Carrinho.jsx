@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
-import { lerDadosLocais } from "../../utils/gestaoLoja";
+import { apiRequest } from "../../utils/gestaoLoja";
 import styles from "./Carrinho.module.css";
 
 const CHAVE_CARRINHO = "auraviva-carrinho";
@@ -18,6 +18,8 @@ const Carrinho = () => {
       return [];
     }
   });
+  const [mensagem, setMensagem] = useState("");
+  const [finalizando, setFinalizando] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(CHAVE_CARRINHO, JSON.stringify(itens));
@@ -38,39 +40,30 @@ const Carrinho = () => {
   const subtotal = itens.reduce((total, item) => total + item.preco * item.quantidade, 0);
   const totalItens = itens.reduce((total, item) => total + item.quantidade, 0);
 
-  const finalizarPedido = (event) => {
-    let pedidos;
+  const finalizarPedido = async () => {
+    setFinalizando(true);
+    setMensagem("");
     try {
-      const valorSalvo = localStorage.getItem("auraviva-pedidos");
-      pedidos = valorSalvo ? JSON.parse(valorSalvo) : [];
-    } catch {
-      pedidos = [];
+      if (itens.some((item) => !Number.isInteger(Number(item.id)))) {
+        throw new Error("Há produtos antigos no carrinho. Remova-os e adicione novamente pelo catálogo atualizado.");
+      }
+      await apiRequest("/vendas", {
+        method: "POST",
+        body: JSON.stringify({
+          itens: itens.map((item) => ({
+            idProduto: Number(item.id),
+            quantidade: item.quantidade,
+          })),
+        }),
+      });
+      localStorage.setItem(CHAVE_CARRINHO, JSON.stringify([]));
+      setItens([]);
+      navigate("/auraviva/perfil?secao=pedidos");
+    } catch (error) {
+      setMensagem(error.message);
+    } finally {
+      setFinalizando(false);
     }
-
-    const criadoEm = new Date().toISOString();
-    const cliente = lerDadosLocais("auraviva-sessao", null);
-    const enderecos = lerDadosLocais("auraviva-enderecos", []);
-    const pedido = {
-      id: `AV-${criadoEm.replace(/\D/g, "")}-${Math.round(event.timeStamp).toString(36).toUpperCase()}`,
-      criadoEm,
-      status: "recebido",
-      itens,
-      subtotal,
-      cliente: cliente?.tipoPerfil === "cliente"
-        ? { nome: cliente.nome, email: cliente.email }
-        : null,
-      enderecoEntrega: cliente?.tipoPerfil === "cliente" && Array.isArray(enderecos)
-        ? enderecos.filter((endereco) => endereco.email === cliente.email).at(-1) || null
-        : null,
-      codigoRastreio: "",
-      previsaoEntrega: "",
-      historico: [{ status: "recebido", data: criadoEm }],
-    };
-
-    localStorage.setItem("auraviva-pedidos", JSON.stringify([pedido, ...pedidos]));
-    localStorage.setItem(CHAVE_CARRINHO, JSON.stringify([]));
-    setItens([]);
-    navigate("/auraviva/perfil?secao=pedidos");
   };
 
   return (
@@ -83,6 +76,7 @@ const Carrinho = () => {
             <h1>Carrinho de compras</h1>
             <p className={styles.description}>Revise suas sementes antes de finalizar o pedido.</p>
           </div>
+          {mensagem && <p role="alert">{mensagem}</p>}
           <span className={styles.itemCount}>{totalItens} {totalItens === 1 ? "item" : "itens"}</span>
         </div>
 
@@ -122,7 +116,9 @@ const Carrinho = () => {
               <div><span>Subtotal</span><strong>{formatarPreco(subtotal)}</strong></div>
               <div><span>Entrega</span><strong className={styles.free}>Grátis</strong></div>
               <div className={styles.total}><span>Total</span><strong>{formatarPreco(subtotal)}</strong></div>
-              <button type="button" className={styles.primaryButton} onClick={finalizarPedido}>Finalizar pedido</button>
+              <button type="button" className={styles.primaryButton} onClick={finalizarPedido} disabled={finalizando}>
+                {finalizando ? "Processando..." : "Finalizar pedido"}
+              </button>
               <Link to="/auraviva/produtos" className={styles.continue}>Continuar comprando</Link>
             </aside>
           </div>

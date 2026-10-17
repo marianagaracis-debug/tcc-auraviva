@@ -1,16 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
 import { artigos, criarSlugArtigo } from "../Blog/artigos";
 import AcompanhamentoPedidos from "./AcompanhamentoPedidos";
-import { produtos } from "../Produto/Produto";
+import { apiRequest, converterProdutoApi, obterCatalogoApi } from "../../utils/gestaoLoja";
 import styles from "./Perfil.module.css";
 
 const CHAVE_USUARIO = "auraviva-usuario";
 const CHAVE_FOTO = "auraviva-foto-perfil";
-const CHAVE_WISHLIST = "auraviva-wishlist";
-const CHAVE_PEDIDOS = "auraviva-pedidos";
-const CHAVE_ENDERECOS = "auraviva-enderecos";
 const CHAVE_SUPORTE = "auraviva-solicitacoes-suporte";
 const CHAVE_AVALIACOES = "auraviva-avaliacoes";
 
@@ -158,15 +155,10 @@ const Perfil = () => {
   const [searchParams] = useSearchParams();
   const [secaoAtiva, setSecaoAtiva] = useState(() => searchParams.get("secao") || "perfil");
   const [mensagem, setMensagem] = useState("");
-  const [listaDeDesejos, setListaDeDesejos] = useState(() => lerLocalStorage(CHAVE_WISHLIST, []));
-  const pedidosSalvos = lerLocalStorage(CHAVE_PEDIDOS, []);
-  const pedidos = Array.isArray(pedidosSalvos)
-    ? pedidosSalvos.filter((pedido) => !pedido.cliente?.email || pedido.cliente.email === usuarioSalvo.email)
-    : [];
-  const [enderecos, setEnderecos] = useState(() => {
-    const salvos = lerLocalStorage(CHAVE_ENDERECOS, []);
-    return Array.isArray(salvos) ? salvos : [];
-  });
+  const [listaDeDesejos, setListaDeDesejos] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
+  const [catalogo, setCatalogo] = useState([]);
+  const [enderecos, setEnderecos] = useState([]);
   const [novoEndereco, setNovoEndereco] = useState({ ...enderecoVazio });
   const [preferencias, setPreferencias] = useState(() => lerLocalStorage("auraviva-notificacoes", {
     pedidos: true,
@@ -192,6 +184,71 @@ const Perfil = () => {
     { novidades: false, personalizacao: true },
   ));
 
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        const perfil = await apiRequest("/usuarios/me");
+        const sessao = {
+          ...perfil,
+          email: perfil.username,
+          tipoPerfil: perfil.nivelAcesso === "USER" ? "cliente" : "funcionario",
+        };
+        localStorage.setItem("auraviva-sessao", JSON.stringify(sessao));
+        localStorage.setItem(CHAVE_USUARIO, JSON.stringify(sessao));
+        setUsuario({ nome: perfil.nome, email: perfil.username });
+        setFormulario({ nome: perfil.nome, email: perfil.username });
+      } catch (error) {
+        setMensagem(error.message);
+        if (error.message.includes("401")) navigate("/auraviva/login", { replace: true });
+        return;
+      }
+
+      const [pedidosResult, enderecosResult, wishlistResult, catalogoResult] = await Promise.allSettled([
+        apiRequest("/vendas/pedidos"),
+        apiRequest("/enderecos/me"),
+        apiRequest("/wishlist"),
+        obterCatalogoApi(),
+      ]);
+
+      if (pedidosResult.status === "fulfilled") {
+        setPedidos(pedidosResult.value.map((pedido) => ({
+          id: pedido.id,
+          criadoEm: pedido.dataVenda,
+          status: ({ PENDENTE: "recebido", PAGO: "recebido", ENVIADO: "enviado", CONCLUIDO: "entregue", CANCELADO: "cancelado" })[pedido.statusVenda] || "recebido",
+          subtotal: Number(pedido.valorTotal),
+          codigoRastreio: pedido.codigoRastreio,
+          previsaoEntrega: pedido.previsaoEntrega,
+          enderecoEntrega: pedido.enderecoEntrega ? { logradouro: pedido.enderecoEntrega } : null,
+          cliente: pedido.cliente,
+          itens: pedido.itens.map((item) => ({
+            id: item.idProduto,
+            nome: item.nome,
+            imagem: item.imagemUrl,
+            quantidade: item.quantidade,
+            preco: Number(item.precoUnitario),
+          })),
+        })));
+      } else setMensagem(pedidosResult.reason.message);
+
+      if (enderecosResult.status === "fulfilled") {
+        setEnderecos(enderecosResult.value.map((endereco) => ({
+          ...endereco,
+          municipio: endereco.cidade,
+          pais: "Brasil",
+        })));
+      } else setMensagem(enderecosResult.reason.message);
+
+      if (wishlistResult.status === "fulfilled") {
+        setListaDeDesejos(wishlistResult.value.map(converterProdutoApi));
+      } else setMensagem(wishlistResult.reason.message);
+
+      if (catalogoResult.status === "fulfilled") {
+        setCatalogo(catalogoResult.value);
+      } else setMensagem(catalogoResult.reason.message);
+    };
+    carregarDados();
+  }, [navigate]);
+
   const iniciais = usuario.nome
     .split(/\s+/)
     .filter(Boolean)
@@ -204,7 +261,7 @@ const Perfil = () => {
     .flatMap((pedido) => Array.isArray(pedido.itens) ? pedido.itens : [])
     .map((item) => [item.id || item.nome, item])).values()];
   const avaliacoesPermitidas = new Set(produtosComprados.map((item) => item.id || item.nome));
-  const produtosRecomendados = produtos.filter((produto) =>
+  const produtosRecomendados = catalogo.filter((produto) =>
     (!consentimentos.personalizacao || produto.estacaoId === preferenciasCultivo.estacao)
       && (!produtosComprados.some((item) => item.nome === produto.nome)),
   ).slice(0, 6);
@@ -219,50 +276,57 @@ const Perfil = () => {
     setNovoEndereco((atual) => ({ ...atual, [name]: value }));
   };
 
-  const salvarEndereco = (event) => {
+  const salvarEndereco = async (event) => {
     event.preventDefault();
-    const endereco = {
-      ...novoEndereco,
-      id: `${Date.now()}`,
-      email: usuario.email,
-    };
-    const enderecosAtualizados = [...enderecos, endereco];
-
     try {
-      localStorage.setItem(CHAVE_ENDERECOS, JSON.stringify(enderecosAtualizados));
-      setEnderecos(enderecosAtualizados);
+      const endereco = await apiRequest("/enderecos", {
+        method: "POST",
+        body: JSON.stringify({
+          apelido: "Endereço",
+          cep: novoEndereco.cep,
+          logradouro: novoEndereco.logradouro,
+          numero: novoEndereco.numero,
+          complemento: novoEndereco.complemento,
+          bairro: novoEndereco.bairro,
+          cidade: novoEndereco.cidade || novoEndereco.municipio,
+          estado: novoEndereco.estado,
+        }),
+      });
+      setEnderecos((atuais) => [...atuais, { ...endereco, municipio: endereco.cidade, pais: "Brasil" }]);
       setNovoEndereco({ ...enderecoVazio });
       setMensagem("Endereço adicionado com sucesso.");
-    } catch {
-      setMensagem("Não foi possível salvar o endereço neste navegador.");
+    } catch (error) {
+      setMensagem(error.message);
     }
   };
 
-  const removerEndereco = (id) => {
-    const enderecosAtualizados = enderecos.filter((endereco) => endereco.id !== id);
-
+  const removerEndereco = async (id) => {
     try {
-      localStorage.setItem(CHAVE_ENDERECOS, JSON.stringify(enderecosAtualizados));
-      setEnderecos(enderecosAtualizados);
+      await apiRequest(`/enderecos/${id}`, { method: "DELETE" });
+      setEnderecos((atuais) => atuais.filter((endereco) => endereco.id !== id));
       setMensagem("Endereço removido.");
-    } catch {
-      setMensagem("Não foi possível remover o endereço neste navegador.");
+    } catch (error) {
+      setMensagem(error.message);
     }
   };
 
-  const salvarPerfil = (event) => {
+  const salvarPerfil = async (event) => {
     event.preventDefault();
     const nome = formulario.nome.trim();
-    const email = formulario.email.trim().toLowerCase();
-    const usuarioCompleto = { ...lerLocalStorage(CHAVE_USUARIO, {}), nome, email };
-
-    localStorage.setItem(CHAVE_USUARIO, JSON.stringify(usuarioCompleto));
-    const sessaoAtual = lerLocalStorage("auraviva-sessao", null);
-    if (sessaoAtual?.tipoPerfil === "cliente") {
-      localStorage.setItem("auraviva-sessao", JSON.stringify({ ...sessaoAtual, nome, email }));
+    try {
+      const perfil = await apiRequest("/usuarios/me", {
+        method: "PUT",
+        body: JSON.stringify({ nome }),
+      });
+      const sessaoAtual = { ...lerLocalStorage("auraviva-sessao", {}), ...perfil, email: perfil.username };
+      localStorage.setItem(CHAVE_USUARIO, JSON.stringify(sessaoAtual));
+      localStorage.setItem("auraviva-sessao", JSON.stringify(sessaoAtual));
+      setUsuario({ nome: perfil.nome, email: perfil.username });
+      setFormulario({ nome: perfil.nome, email: perfil.username });
+      setMensagem("Seus dados foram atualizados.");
+    } catch (error) {
+      setMensagem(error.message);
     }
-    setUsuario({ nome, email });
-    setMensagem("Seus dados foram atualizados.");
   };
 
   const carregarFoto = (event) => {
@@ -421,15 +485,24 @@ const Perfil = () => {
     }
   };
 
-  const encerrarSessao = () => {
-    localStorage.removeItem("auraviva-sessao");
-    navigate("/auraviva/login", { replace: true });
+  const encerrarSessao = async () => {
+    try {
+      await apiRequest("/logout", { method: "POST" });
+      localStorage.removeItem("auraviva-sessao");
+      localStorage.removeItem(CHAVE_USUARIO);
+      navigate("/auraviva/login", { replace: true });
+    } catch (error) {
+      setMensagem(error.message);
+    }
   };
 
-  const removerDaListaDeDesejos = (id) => {
-    const listaAtualizada = listaDeDesejos.filter((produto) => produto.id !== id);
-    setListaDeDesejos(listaAtualizada);
-    localStorage.setItem(CHAVE_WISHLIST, JSON.stringify(listaAtualizada));
+  const removerDaListaDeDesejos = async (id) => {
+    try {
+      await apiRequest(`/wishlist/${id}`, { method: "DELETE" });
+      setListaDeDesejos((atuais) => atuais.filter((produto) => produto.id !== id));
+    } catch (error) {
+      setMensagem(error.message);
+    }
   };
 
   const renderizarConteudo = () => {
@@ -450,9 +523,10 @@ const Perfil = () => {
             </label>
             <label>
               E-mail
-              <input name="email" type="email" value={formulario.email} onChange={atualizarFormulario} placeholder="voce@email.com" required />
+              <input name="email" type="email" value={formulario.email} readOnly aria-describedby="email-somente-leitura" />
             </label>
           </div>
+          <p id="email-somente-leitura" className={styles.localDataNote}>O e-mail de acesso não pode ser alterado por esta tela.</p>
           <button type="submit" className={styles.primaryButton}>Salvar alterações</button>
         </form>
       );
@@ -524,13 +598,12 @@ const Perfil = () => {
                   </div>
                   <p>{endereco.logradouro}, {endereco.numero}{endereco.complemento && ` - ${endereco.complemento}`}</p>
                   <p>{endereco.bairro}, {endereco.cidade} - {endereco.estado}</p>
-                  <p>{endereco.municipio} · {endereco.cep}</p>
+                  <p>{endereco.municipio || endereco.cidade} · {endereco.cep}</p>
                   <p>{endereco.pais}{endereco.referencia && ` · Referência: ${endereco.referencia}`}</p>
                 </article>
               ))}
             </div>
           )}
-          <p className={styles.localDataNote}>Seus endereços ficam salvos apenas neste navegador.</p>
         </div>
       );
     }
@@ -592,7 +665,7 @@ const Perfil = () => {
       const pedidosEmEntrega = pedidos.filter((pedido) => pedido.status !== "cancelado");
       return pedidosEmEntrega.length > 0 ? (
         <>
-          <p className={styles.localDataNote}>Acompanhe cada etapa, previsão de entrega e código de rastreamento, quando disponíveis.</p>
+          <p className={styles.localDataNote}>Pedidos e atualizações são carregados da sua conta Auraviva.</p>
           <AcompanhamentoPedidos pedidos={pedidosEmEntrega} />
         </>
       ) : (
@@ -636,7 +709,7 @@ const Perfil = () => {
               <h3>Produtos dos seus pedidos</h3>
               <div className={styles.customerProductGrid}>
                 {produtosComprados.map((item) => {
-                  const produto = produtos.find((catalogo) => catalogo.nome === item.nome);
+                  const produto = catalogo.find((produtoAtual) => produtoAtual.nome === item.nome);
                   return (
                     <article className={styles.customerProductCard} key={item.id || item.nome}>
                       {produto?.imagem && <img src={produto.imagem} alt={produto.alt || produto.nome} />}

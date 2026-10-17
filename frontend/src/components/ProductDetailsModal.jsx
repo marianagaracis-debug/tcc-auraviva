@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../pages/Produto/Produto.module.css";
 import { adicionarProdutoAoCarrinho } from "../utils/carrinho";
+import { apiRequest } from "../utils/gestaoLoja";
 
 const ProductDetailsModal = ({ produto, onClose, onAdded }) => {
   const navigate = useNavigate();
   const [quantidade, setQuantidade] = useState(1);
+  const [mensagem, setMensagem] = useState("");
   const descricao = produto.descricao
     || `As sementes de ${produto.nome} são uma escolha de qualidade para o cultivo de ${produto.categoria.toLowerCase()}. Com bom potencial de desenvolvimento e adaptação para o ${produto.estacao.toLowerCase()}, elas ajudam a transformar cada plantio em uma nova possibilidade.`;
 
@@ -14,23 +16,14 @@ const ProductDetailsModal = ({ produto, onClose, onAdded }) => {
     onAdded();
   };
 
-  const adicionarAListaDeDesejos = () => {
-    const listaAtual = JSON.parse(localStorage.getItem("auraviva-wishlist") || "[]");
-    const produtoJaSalvo = listaAtual.some((item) => item.id === produto.nome);
-
-    if (!produtoJaSalvo) {
-      localStorage.setItem("auraviva-wishlist", JSON.stringify([
-        ...listaAtual,
-        {
-          ...produto,
-          id: produto.nome,
-          descricao,
-        },
-      ]));
+  const adicionarAListaDeDesejos = async () => {
+    try {
+      await apiRequest(`/wishlist/${produto.id}`, { method: "POST" });
+      onClose();
+      navigate("/auraviva/perfil?secao=desejos");
+    } catch (error) {
+      setMensagem(error.message);
     }
-
-    onClose();
-    navigate("/auraviva/perfil?secao=desejos");
   };
 
   return (
@@ -42,6 +35,7 @@ const ProductDetailsModal = ({ produto, onClose, onAdded }) => {
         aria-labelledby="produto-detalhe-titulo"
         onClick={(event) => event.stopPropagation()}
       >
+        {mensagem && <p role="alert">{mensagem}</p>}
         <button
           type="button"
           className={styles.closeDetails}

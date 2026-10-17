@@ -1,7 +1,6 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva"
-import { produtos } from "../Produto/Produto"
-import { obterProdutosAtivos } from "../../utils/gestaoLoja"
+import { obterCatalogoApi } from "../../utils/gestaoLoja"
 import ProductDetailsModal from "../../components/ProductDetailsModal"
 import { adicionarProdutoAoCarrinho } from "../../utils/carrinho"
 import styles from "./SementesDeInverno.module.css"
@@ -17,11 +16,19 @@ const categorias = [
 const SementesDeInverno = () => {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("todos")
   const [termoBusca, setTermoBusca] = useState("")
+  const [produtosDeInverno, setProdutosDeInverno] = useState([])
+  const [erroApi, setErroApi] = useState("")
+  const [carregando, setCarregando] = useState(true)
   const [quantidades, setQuantidades] = useState({})
   const [produtoSelecionado, setProdutoSelecionado] = useState(null)
   const [mensagemCarrinho, setMensagemCarrinho] = useState("")
 
-  const produtosDeInverno = obterProdutosAtivos(produtos).filter((produto) => produto.estacaoId === "inverno")
+  useEffect(() => {
+    obterCatalogoApi("INVERNO")
+      .then(setProdutosDeInverno)
+      .catch((error) => setErroApi(error.message))
+      .finally(() => setCarregando(false))
+  }, [])
   const normalizar = (texto) => texto
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -118,9 +125,10 @@ const SementesDeInverno = () => {
               />
             </div>
           </div>
-          {produtosFiltrados.length === 0 && (
+          {carregando && <p role="status">Carregando produtos...</p>}
+          {produtosFiltrados.length === 0 && !carregando && (
             <p className={styles.emptyResults} role="status">
-              Nenhum produto encontrado{termoBusca.trim() ? ` para "${termoBusca.trim()}"` : ""}.
+              {erroApi || "Nenhum produto encontrado"}{!erroApi && termoBusca.trim() ? ` para "${termoBusca.trim()}"` : ""}.
             </p>
           )}
           {mensagemCarrinho && <p role="status">{mensagemCarrinho}</p>}

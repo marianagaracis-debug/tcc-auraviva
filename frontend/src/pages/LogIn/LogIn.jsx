@@ -1,21 +1,26 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiRequest } from "../../utils/gestaoLoja";
 import styles from "./LogIn.module.css";
 
-const CHAVE_USUARIO = "auraviva-usuario";
-const CHAVE_FUNCIONARIO = "auraviva-funcionario";
 const CHAVE_SESSAO = "auraviva-sessao";
-const CHAVE_CLIENTES = "auraviva-clientes";
 
 const LogIn = () => {
   const navigate = useNavigate();
   const [modoCadastro, setModoCadastro] = useState(false);
+  const [modoRecuperacao, setModoRecuperacao] = useState(false);
   const [tipoAcesso, setTipoAcesso] = useState("cliente");
   const [dados, setDados] = useState({ nome: "", email: "", senha: "", confirmarSenha: "" });
+  const [codigoFuncionario, setCodigoFuncionario] = useState("");
+  const [codigoRecuperacao, setCodigoRecuperacao] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [etapaRecuperacao, setEtapaRecuperacao] = useState(0);
   const [mensagem, setMensagem] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   const alternarModo = () => {
     setModoCadastro((modoAtual) => !modoAtual);
+    setModoRecuperacao(false);
     setMensagem("");
   };
 
@@ -24,70 +29,72 @@ const LogIn = () => {
     setDados((dadosAtuais) => ({ ...dadosAtuais, [name]: value }));
   };
 
-  const enviarFormulario = (event) => {
+  const enviarFormulario = async (event) => {
     event.preventDefault();
     const email = dados.email.trim().toLowerCase();
-    const chaveConta = tipoAcesso === "funcionario" ? CHAVE_FUNCIONARIO : CHAVE_USUARIO;
-
-    if (modoCadastro) {
-      if (dados.senha !== dados.confirmarSenha) {
-        setMensagem("As senhas não coincidem.");
+    setEnviando(true);
+    setMensagem("");
+    try {
+      if (modoRecuperacao) {
+        if (etapaRecuperacao === 0) {
+          await apiRequest(`/recuperar-senha/solicitar-codigo?email=${encodeURIComponent(email)}`, { method: "POST" });
+          setEtapaRecuperacao(1);
+          setMensagem("Se a conta existir, o código de recuperação foi enviado ao e-mail.");
+        } else {
+          await apiRequest("/recuperar-senha/redefinir-senha", {
+            method: "POST",
+            body: JSON.stringify({ email, codigo: codigoRecuperacao, novaSenha }),
+          });
+          setModoRecuperacao(false);
+          setEtapaRecuperacao(0);
+          setMensagem("Senha redefinida. Entre com sua nova senha.");
+        }
         return;
       }
 
-      const usuario = {
-        nome: dados.nome.trim(),
-        email,
-        senha: dados.senha,
-        tipoPerfil: tipoAcesso,
-        cadastroEm: new Date().toISOString(),
-        statusConta: "ativa",
+      if (modoCadastro) {
+        if (dados.senha !== dados.confirmarSenha) {
+          setMensagem("As senhas não coincidem.");
+          return;
+        }
+        const cadastro = {
+          nome: dados.nome.trim(),
+          username: email,
+          password: dados.senha,
+        };
+        if (tipoAcesso === "funcionario") {
+          await apiRequest("/usuarios/create-funcionario", {
+            method: "POST",
+            headers: { "X-Codigo-Funcionario": codigoFuncionario },
+            body: JSON.stringify(cadastro),
+          });
+        } else {
+          await apiRequest("/usuarios/create", { method: "POST", body: JSON.stringify(cadastro) });
+        }
+        setMensagem(`Cadastro de ${tipoAcesso === "funcionario" ? "funcionário" : "cliente"} realizado. Agora você já pode entrar.`);
+        setDados({ nome: "", email, senha: "", confirmarSenha: "" });
+        setModoCadastro(false);
+        return;
+      }
+
+      await apiRequest("/login", {
+        method: "POST",
+        body: new URLSearchParams({ username: email, password: dados.senha }),
+      });
+      const perfil = await apiRequest("/usuarios/me");
+      const sessao = {
+        ...perfil,
+        email: perfil.username,
+        tipoPerfil: perfil.nivelAcesso === "USER" ? "cliente" : "funcionario",
       };
-      const usuarioSalvo = JSON.parse(localStorage.getItem(chaveConta) || "null");
-
-      if (usuarioSalvo?.email === email) {
-        setMensagem("Este e-mail já está cadastrado.");
-        return;
-      }
-
-      localStorage.setItem(chaveConta, JSON.stringify(usuario));
-      if (tipoAcesso === "cliente") {
-        const clientes = JSON.parse(localStorage.getItem(CHAVE_CLIENTES) || "[]");
-        localStorage.setItem(CHAVE_CLIENTES, JSON.stringify([
-          ...clientes.filter((cliente) => cliente.email !== email),
-          usuario,
-        ]));
-      }
-      setMensagem(`Cadastro de ${tipoAcesso === "funcionario" ? "funcionário" : "cliente"} realizado! Agora você já pode entrar.`);
-      setDados({ nome: "", email, senha: "", confirmarSenha: "" });
-      setModoCadastro(false);
-      return;
-    }
-
-    const usuarioSalvo = JSON.parse(localStorage.getItem(chaveConta) || "null");
-    if (usuarioSalvo?.email === email && usuarioSalvo.senha === dados.senha) {
-      if (usuarioSalvo.statusConta === "inativa") {
-        setMensagem("Esta conta está inativa. Entre em contato com um administrador.");
-        return;
-      }
-      const sessao = { ...usuarioSalvo, tipoPerfil: tipoAcesso, ultimoAcessoEm: new Date().toISOString() };
       localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessao));
-      if (tipoAcesso === "cliente") {
-        localStorage.setItem(CHAVE_USUARIO, JSON.stringify(sessao));
-        const clientes = JSON.parse(localStorage.getItem(CHAVE_CLIENTES) || "[]");
-        localStorage.setItem(CHAVE_CLIENTES, JSON.stringify([
-          ...clientes.filter((cliente) => cliente.email !== email),
-          sessao,
-        ]));
-        navigate("/auraviva/perfil");
-      } else {
-        localStorage.setItem(CHAVE_FUNCIONARIO, JSON.stringify(sessao));
-        navigate("/auraviva/perfil-usuario");
-      }
-      return;
+      localStorage.setItem("auraviva-usuario", JSON.stringify(sessao));
+      navigate(sessao.tipoPerfil === "cliente" ? "/auraviva/perfil" : "/auraviva/perfil-usuario");
+    } catch (error) {
+      setMensagem(error.message);
+    } finally {
+      setEnviando(false);
     }
-
-    setMensagem("E-mail ou senha inválidos.");
   };
 
   return (
@@ -101,16 +108,18 @@ const LogIn = () => {
 
         <div className={styles.heading}>
           <span className={styles.eyebrow}>Bem-vindo à Auraviva</span>
-          <h1 id="login-titulo">{modoCadastro ? "Crie sua conta" : "Acesse sua conta"}</h1>
+          <h1 id="login-titulo">{modoRecuperacao ? "Recupere sua senha" : modoCadastro ? "Crie sua conta" : "Acesse sua conta"}</h1>
           <p>
-            {modoCadastro
+            {modoRecuperacao
+              ? "Informe seu e-mail e siga as instruções enviadas para redefinir sua senha."
+              : modoCadastro
               ? "Cadastre-se para acompanhar seus pedidos e encontrar novas sementes."
               : "Entre para continuar sua jornada de cultivo."}
           </p>
         </div>
 
         <form className={styles.formulario} onSubmit={enviarFormulario}>
-          <div className={styles.accessTypes} role="group" aria-label="Tipo de acesso">
+          {!modoRecuperacao && <div className={styles.accessTypes} role="group" aria-label="Tipo de acesso">
             <button
               type="button"
               className={tipoAcesso === "cliente" ? styles.accessTypeActive : ""}
@@ -127,8 +136,8 @@ const LogIn = () => {
             >
               Funcionário
             </button>
-          </div>
-          {modoCadastro && (
+          </div>}
+          {modoCadastro && !modoRecuperacao && (
             <label>
               Nome completo
               <input name="nome" type="text" placeholder="Digite seu nome" value={dados.nome} onChange={atualizarCampo} required />
@@ -140,35 +149,55 @@ const LogIn = () => {
             <input name="email" type="email" placeholder="voce@email.com" value={dados.email} onChange={atualizarCampo} required />
           </label>
 
-          <label>
+          {modoCadastro && tipoAcesso === "funcionario" && !modoRecuperacao && (
+            <label>
+              Código de funcionário
+              <input value={codigoFuncionario} onChange={(event) => setCodigoFuncionario(event.target.value)} required />
+            </label>
+          )}
+
+          {!modoRecuperacao && <label>
             Senha
             <input name="senha" type="password" placeholder="Digite sua senha" value={dados.senha} onChange={atualizarCampo} required />
-          </label>
+          </label>}
 
-          {modoCadastro && (
+          {modoCadastro && !modoRecuperacao && (
             <label>
               Confirmar senha
               <input name="confirmarSenha" type="password" placeholder="Repita sua senha" value={dados.confirmarSenha} onChange={atualizarCampo} required />
             </label>
           )}
 
-          {!modoCadastro && (
-            <button type="button" className={styles.linkButton}>
+          {modoRecuperacao && etapaRecuperacao > 0 && (
+            <>
+              <label>Código de recuperação<input value={codigoRecuperacao} onChange={(event) => setCodigoRecuperacao(event.target.value)} required /></label>
+              <label>Nova senha<input type="password" value={novaSenha} onChange={(event) => setNovaSenha(event.target.value)} minLength={8} required /></label>
+            </>
+          )}
+
+          {!modoCadastro && !modoRecuperacao && (
+            <button type="button" className={styles.linkButton} onClick={() => { setModoRecuperacao(true); setMensagem(""); }}>
               Esqueci minha senha
             </button>
           )}
 
-          <button type="submit" className={styles.submitButton}>
-            {modoCadastro ? `Criar conta de ${tipoAcesso === "funcionario" ? "funcionário" : "cliente"}` : "Entrar"}
+          <button type="submit" className={styles.submitButton} disabled={enviando}>
+            {enviando ? "Aguarde..." : modoRecuperacao ? (etapaRecuperacao === 0 ? "Enviar código" : "Redefinir senha") : modoCadastro ? `Criar conta de ${tipoAcesso === "funcionario" ? "funcionário" : "cliente"}` : "Entrar"}
           </button>
         </form>
 
         {mensagem && <p className={styles.mensagem} role="status">{mensagem}</p>}
 
         <p className={styles.switchText}>
-          {modoCadastro ? "Já possui uma conta?" : `Ainda não possui uma conta de ${tipoAcesso === "funcionario" ? "funcionário" : "cliente"}?`}{" "}
-          <button type="button" className={styles.switchButton} onClick={alternarModo}>
-            {modoCadastro ? "Entrar" : "Cadastre-se"}
+          {modoRecuperacao ? "Lembrou sua senha?" : modoCadastro ? "Já possui uma conta?" : `Ainda não possui uma conta de ${tipoAcesso === "funcionario" ? "funcionário" : "cliente"}?`}{" "}
+          <button type="button" className={styles.switchButton} onClick={() => {
+            if (modoRecuperacao) {
+              setModoRecuperacao(false);
+              setEtapaRecuperacao(0);
+              setMensagem("");
+            } else alternarModo();
+          }}>
+            {modoRecuperacao || modoCadastro ? "Entrar" : "Cadastre-se"}
           </button>
         </p>
       </section>

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva"
-import { obterProdutosAtivos } from "../../utils/gestaoLoja";
+import { apiRequest, obterCatalogoApi } from "../../utils/gestaoLoja";
+import { adicionarProdutoAoCarrinho } from "../../utils/carrinho";
 import styles from "./Produto.module.css";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const produtos = [
     {"nome":"Milho Doce","imagem":"https://agristar.com.br/upload/products/original/04529.jpg","alt":"Milho Doce","categoriaId":"vegetais","categoria":"Vegetais","estacaoId":"verao","estacao":"Verão","preco":"R$ 14,90"},
     {"nome":"Tomate Cereja","imagem":"https://images.pexels.com/photos/37730751/pexels-photo-37730751/free-photo-of-tomates-cereja-frescos-em-uma-tigela-branca.jpeg","alt":"Tomate Cereja","categoriaId":"vegetais","categoria":"Vegetais","estacaoId":"verao","estacao":"Verão","preco":"R$ 12,90"},
@@ -63,12 +65,18 @@ const Produto = () => {
     const [categoriaSelecionada, setCategoriaSelecionada] = useState("todas");
     const [produtoSelecionado, setProdutoSelecionado] = useState(null);
     const [quantidadeSelecionada, setQuantidadeSelecionada] = useState(1);
+    const [produtosCatalogo, setProdutosCatalogo] = useState([]);
+    const [erroApi, setErroApi] = useState("");
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const cardsRef = useRef(null);
     const mensagemBuscaRef = useRef(null);
     const termoBusca = (searchParams.get("q") || "").trim();
-    const produtosCatalogo = obterProdutosAtivos(produtos);
+    useEffect(() => {
+        obterCatalogoApi()
+            .then(setProdutosCatalogo)
+            .catch((error) => setErroApi(error.message));
+    }, []);
 
     useEffect(() => {
         const normalizar = (texto) => texto
@@ -102,27 +110,12 @@ const Produto = () => {
                     ? `Nenhum produto encontrado para "${termoBusca}".`
                     : "Nenhum produto nesta categoria.";
         }
-    }, [termoBusca, categoriaSelecionada]);
+    }, [termoBusca, categoriaSelecionada, produtosCatalogo]);
 
     const adicionarAoCarrinho = (event) => {
         const card = event.currentTarget.closest(".card");
-        const item = {
-            id: card.querySelector("h3").textContent.trim(),
-            nome: card.querySelector("h3").textContent.trim(),
-            categoria: card.querySelector(".categoria-badge").textContent.trim(),
-            preco: Number(card.querySelector(".preco").textContent.replace("R$", "").replace(".", "").replace(",", ".").trim()),
-            imagem: card.querySelector("img").src,
-            quantidade: quantidades[card.dataset.indice] || 1,
-        };
-        const carrinhoAtual = JSON.parse(localStorage.getItem("auraviva-carrinho") || "[]");
-        const itemExistente = carrinhoAtual.find((produto) => produto.id === item.id);
-        const carrinhoAtualizado = itemExistente
-            ? carrinhoAtual.map((produto) => produto.id === item.id
-                ? { ...produto, quantidade: produto.quantidade + item.quantidade }
-                : produto)
-            : [...carrinhoAtual, item];
-
-        localStorage.setItem("auraviva-carrinho", JSON.stringify(carrinhoAtualizado));
+        const produto = produtosCatalogo[Number(card.dataset.indice)];
+        adicionarProdutoAoCarrinho(produto, quantidades[card.dataset.indice] || 1);
         event.currentTarget.textContent = "Adicionado";
         window.setTimeout(() => {
             event.currentTarget.textContent = "Adicionar ao Carrinho";
@@ -148,7 +141,6 @@ const Produto = () => {
 
         setProdutoSelecionado({
             ...produtosCatalogo.find((produto) => produto.nome === nome),
-            id: nome,
             nome,
             categoria,
             estacao,
@@ -163,33 +155,18 @@ const Produto = () => {
     const fecharDetalhes = () => setProdutoSelecionado(null);
 
     const adicionarSelecionadoAoCarrinho = () => {
-        const item = {
-            ...produtoSelecionado,
-            preco: Number(produtoSelecionado.preco.replace("R$", "").replace(/\./g, "").replace(",", ".").trim()),
-            quantidade: quantidadeSelecionada,
-        };
-        const carrinhoAtual = JSON.parse(localStorage.getItem("auraviva-carrinho") || "[]");
-        const itemExistente = carrinhoAtual.find((produto) => produto.id === item.id);
-        const carrinhoAtualizado = itemExistente
-            ? carrinhoAtual.map((produto) => produto.id === item.id
-                ? { ...produto, quantidade: produto.quantidade + item.quantidade }
-                : produto)
-            : [...carrinhoAtual, item];
-
-        localStorage.setItem("auraviva-carrinho", JSON.stringify(carrinhoAtualizado));
+        adicionarProdutoAoCarrinho(produtoSelecionado, quantidadeSelecionada);
         fecharDetalhes();
     };
 
-    const adicionarAListaDeDesejos = () => {
-        const listaAtual = JSON.parse(localStorage.getItem("auraviva-wishlist") || "[]");
-        const produtoJaSalvo = listaAtual.some((produto) => produto.id === produtoSelecionado.id);
-
-        if (!produtoJaSalvo) {
-            localStorage.setItem("auraviva-wishlist", JSON.stringify([...listaAtual, produtoSelecionado]));
+    const adicionarAListaDeDesejos = async () => {
+        try {
+            await apiRequest(`/wishlist/${produtoSelecionado.id}`, { method: "POST" });
+            fecharDetalhes();
+            navigate("/auraviva/perfil?secao=desejos");
+        } catch (error) {
+            setErroApi(error.message);
         }
-
-        fecharDetalhes();
-        navigate("/auraviva/perfil?secao=desejos");
     };
 
     return (
@@ -225,6 +202,8 @@ const Produto = () => {
                         </section>
                     </aside>
                     <main className={styles.catalogResults}>
+                        {erroApi && <p className={styles.emptyResults} role="alert">{erroApi}</p>}
+                        {!erroApi && produtosCatalogo.length === 0 && <p role="status">Carregando produtos...</p>}
                         <p ref={mensagemBuscaRef} className={styles.emptyResults} role="status" hidden />
                         <div className="cards" ref={cardsRef} onClick={abrirDetalhes}>
                     {produtosCatalogo.map((produto, indice) => (

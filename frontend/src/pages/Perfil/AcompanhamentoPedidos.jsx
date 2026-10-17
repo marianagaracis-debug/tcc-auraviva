@@ -102,8 +102,8 @@ const AcompanhamentoPedidos = ({ pedidos, modoGestao = false, atualizarPedido })
               <label>
                 Código de rastreio
                 <input
-                  value={pedido.codigoRastreio || ""}
-                  onChange={(event) => atualizarPedido(pedido.id, { codigoRastreio: event.target.value })}
+                  defaultValue={pedido.codigoRastreio || ""}
+                  onBlur={(event) => atualizarPedido(pedido.id, { codigoRastreio: event.target.value })}
                   placeholder="Informe ao despachar"
                 />
               </label>
@@ -119,8 +119,8 @@ const AcompanhamentoPedidos = ({ pedidos, modoGestao = false, atualizarPedido })
                 Previsão de entrega
                 <input
                   type="date"
-                  value={pedido.previsaoEntrega || ""}
-                  onChange={(event) => atualizarPedido(pedido.id, { previsaoEntrega: event.target.value })}
+                  defaultValue={pedido.previsaoEntrega || ""}
+                  onBlur={(event) => atualizarPedido(pedido.id, { previsaoEntrega: event.target.value })}
                 />
               </label>
             </div>
