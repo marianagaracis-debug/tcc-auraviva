@@ -8,9 +8,10 @@ API REST em **Java 21 + Spring Boot 4 + SQL Server**.
 
 ## Como rodar
 
-1. Crie as tabelas: execute `database/bd_auraviva_sqlserver.sql` no seu banco.
-2. Copie `.env.example` para `.env` e preencha com os dados do painel do Somee (o Spring lê esse arquivo sozinho).
-3. Inicie a API (dentro da pasta `backend`):
+1. Em um banco SQL Server vazio, crie a estrutura com o script apropriado em `../database/`.
+   **Não execute os scripts de criação sobre um banco com dados**: eles podem apagar tabelas existentes.
+2. Copie `.env.example` para `.env` e preencha com os dados do seu SQL Server. Nunca compartilhe nem versione `.env`.
+3. Inicie a API (dentro da pasta `backend`); o Maven Wrapper baixa a versão configurada na primeira execução:
 
 ```
 # Windows
@@ -20,7 +21,7 @@ API REST em **Java 21 + Spring Boot 4 + SQL Server**.
 ./mvnw spring-boot:run
 ```
 
-A API sobe em http://localhost:8080
+A API sobe em `http://localhost:8080`. Em plataformas que definem uma variável `PORT`, o backend usa essa porta automaticamente.
 
 ## Usuários de teste (senha: 12345678)
 - admin@auraviva.com.br (ADMIN)
@@ -30,6 +31,8 @@ A API sobe em http://localhost:8080
 ## Variáveis do `.env`
 `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `CODIGO_FUNCIONARIO`, `CORS_ORIGINS`, `SESSION_SAMESITE`, `SESSION_SECURE`, `MAIL_USER`, `MAIL_PASSWORD`.
 O e-mail é opcional (só a recuperação de senha depende dele).
+
+O arquivo `.env.example` contém valores de exemplo para desenvolvimento local. Em produção, forneça as mesmas variáveis por meio do gerenciador de segredos da plataforma e ajuste `CORS_ORIGINS` para o domínio HTTPS exato do frontend.
 
 ## Níveis de acesso
 | Nível | Quem é | O que pode |

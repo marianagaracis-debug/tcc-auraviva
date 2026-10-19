@@ -2,7 +2,6 @@
 //import './App.css'
 import Intro from './pages/Intro/Intro';
 import HomeAuraviva from './pages/HomeAuraviva/HomeAuraviva';
-
 function App() {
   
   return (
@@ -12,7 +11,6 @@ function App() {
           {/*todo o conteúdo atual da Auraviva*/}
         </div>
         <HomeAuraviva/>
-
     </>
   )
 }

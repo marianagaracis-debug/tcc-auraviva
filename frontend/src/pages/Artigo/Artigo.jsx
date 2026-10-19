@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import MenuAuraviva from "../MenuAuraviva/MenuAuraviva";
-import { criarSlugArtigo } from "../Blog/artigos";
+import { converterConteudoArtigo, criarSlugArtigo } from "../Blog/artigos";
 import { apiRequest } from "../../utils/gestaoLoja";
 import styles from "./Artigo.module.css";
 
@@ -25,6 +25,7 @@ const Artigo = () => {
         categoria: item.autor || "Cultivo",
         imagem: item.imagemUrl || "",
         subtitulo: item.resumo,
+        conteudo: converterConteudoArtigo(item.conteudo),
         texto: item.conteudo,
       }))))
       .catch((error) => setErroApi(error.message))

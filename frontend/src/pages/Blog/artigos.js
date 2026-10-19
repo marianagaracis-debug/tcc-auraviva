@@ -6,6 +6,23 @@ export const criarSlugArtigo = (titulo) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+export const converterConteudoArtigo = (conteudo) => {
+  if (Array.isArray(conteudo)) {
+    return conteudo;
+  }
+
+  if (typeof conteudo !== "string" || !conteudo.trim()) {
+    return [];
+  }
+
+  try {
+    const secoes = JSON.parse(conteudo);
+    return Array.isArray(secoes) ? secoes : [{ texto: conteudo }];
+  } catch {
+    return [{ texto: conteudo }];
+  }
+};
+
 export const artigos = [
   {
     categoria: "Conceitos Básicos",

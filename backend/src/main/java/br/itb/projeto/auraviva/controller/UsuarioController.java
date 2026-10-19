@@ -19,12 +19,14 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import br.itb.projeto.auraviva.dto.UsuarioDTO;
 import br.itb.projeto.auraviva.model.entity.Usuario;
 import br.itb.projeto.auraviva.service.UsuarioService;
 
 @RestController
 @RequestMapping("/usuarios")
+@CrossOrigin(origins = "*")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;

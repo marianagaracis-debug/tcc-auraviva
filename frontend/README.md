@@ -2,16 +2,31 @@
 
 ## Conexão com a API AuraViva
 
+Instale as dependências e crie a configuração local a partir do exemplo:
+
+```bash
+npm install
+cp .env.example .env
+npm run dev -- --host 0.0.0.0
+```
+
+No PowerShell, use `Copy-Item .env.example .env` no lugar do comando `cp`.
+
 Por padrão, a aplicação chama `http://localhost:8080`. Para usar outra instalação,
-defina `VITE_API_URL` no ambiente usado pelo Vite, por exemplo:
+defina `VITE_API_URL` no arquivo `.env` antes de iniciar ou compilar o frontend:
 
 ```env
 VITE_API_URL=https://api.seudominio.com
 ```
 
-O backend precisa estar ativo, conectado ao SQL Server e com a origem do site em
-`CORS_ORIGINS`. As chamadas usam cookies de sessão; para domínios diferentes em HTTPS,
-configure também `SESSION_SAMESITE=None` e `SESSION_SECURE=true` no backend.
+O backend precisa estar ativo, conectado ao SQL Server e com a origem exata do site
+(esquema e host, sem barra final) em `CORS_ORIGINS`. Reinicie o Vite depois de mudar
+`VITE_API_URL`, pois os valores `VITE_*` são incluídos durante o build. As chamadas
+usam cookies de sessão; para domínios diferentes em HTTPS, configure também
+`SESSION_SAMESITE=None` e `SESSION_SECURE=true` no backend.
+
+Para publicar, compile com `npm run build` e hospede o conteúdo de `dist/`. Configure
+`VITE_API_URL` para a URL pública da API durante o build.
 
 Catálogo, artigos, cadastro/login, recuperação de senha, checkout, pedidos, lista de desejos,
 endereços, contato e newsletter usam os endpoints da API.

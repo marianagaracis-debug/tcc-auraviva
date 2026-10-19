@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,8 @@ import br.itb.projeto.auraviva.service.BlogService;
 
 @RestController
 @RequestMapping("/blogs")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
+
 public class BlogController {
 
     private final BlogService blogService;
