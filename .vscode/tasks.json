@@ -1,0 +1,80 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "sqlproj: Build Auraviva-tcc",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"${workspaceFolder}/Auraviva-tcc/Auraviva-tcc.sqlproj"
+			],
+			"problemMatcher": "$sqlproj-problem-matcher",
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "Compila o Auraviva-tcc projeto SQL"
+		},
+		{
+			"label": "AuraViva: iniciar API",
+			"type": "shell",
+			"command": "./mvnw spring-boot:run",
+			"windows": {
+				"command": ".\\mvnw.cmd spring-boot:run"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/backend"
+			},
+			"isBackground": true,
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
+			"problemMatcher": {
+				"owner": "custom",
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "^\\[INFO\\] --- spring-boot:.*:run",
+					"endsPattern": "Started Startup in .* seconds"
+				}
+			},
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "always",
+				"showReuseMessage": false
+			}
+		},
+		{
+			"label": "AuraViva: iniciar frontend",
+			"type": "shell",
+			"command": "npm --prefix frontend run dev -- --host 0.0.0.0",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"isBackground": true,
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
+			"problemMatcher": {
+				"owner": "custom",
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "^> vite .*--host 0\\.0\\.0\\.0",
+					"endsPattern": "Local:\\s+https?://"
+				}
+			},
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never",
+				"showReuseMessage": false
+			}
+		}
+	]
+}

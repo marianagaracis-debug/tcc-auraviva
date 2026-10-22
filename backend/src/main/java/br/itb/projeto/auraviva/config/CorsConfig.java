@@ -1,5 +1,6 @@
 package br.itb.projeto.auraviva.config;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,7 +29,10 @@ public class CorsConfig {
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.toList());
 
-        config.setAllowedOrigins(origins);
+        List<String> allowedOriginPatterns = new ArrayList<>(origins);
+        allowedOriginPatterns.add("http://localhost:[*]");
+        allowedOriginPatterns.add("http://127.0.0.1:[*]");
+        config.setAllowedOriginPatterns(allowedOriginPatterns);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Codigo-Funcionario"));
         config.setExposedHeaders(List.of("Authorization"));
